@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+ * Heirloom Kitchen tokens — resolved values for design.md §2's abstract tokens.
+ * Source: cookbook ui idea/stitch_yhup_communication_portal/heirloom_kitchen/DESIGN.md
+ * Bento rules (design.md §2.1): 4–6px radius, 1px borders, no shadows,
+ * diagonal-hatch image placeholders.
+ */
+@theme {
+  /* Color tokens (design.md §2.2 → Heirloom Kitchen palette) */
+  --color-page: #fdf8f2; /* warm cream body background (DESIGN.md warm-cream) */
+  --color-bg: #fff8f5;
+  --color-surface: #fff8f5;
+  --color-surface-container: #ffeadf;
+  --color-surface-container-high: #ffe3d4;
+  --color-border: #dec0b4;
+  --color-border-strong: #8a7267;
+  --color-text-primary: #29170d;
+  --color-text-secondary: #574239;
+  --color-accent: #ef7a3c;
+  --color-accent-deep: #a14100;
+  --color-secondary: #3f6833;
+  --color-secondary-container: #bdedaa;
+  --color-secondary-fixed: #c0f0ad;
+  --color-on-secondary-fixed: #022100;
+  --color-turmeric: #eab308; /* timers + alerts only (Heirloom Kitchen "Tertiary") */
+  --color-error: #ba1a1a;
+  --color-placeholder: #e5e1db;
+
+  /* Typography (Heirloom Kitchen typography block) — the --font-* variables
+   * are exposed by next/font/local in layout.tsx (preloaded, self-hosted);
+   * the quoted names stay as non-JS fallbacks for plain-CSS consumers. */
+  --font-display: var(--font-jakarta, "Plus Jakarta Sans"), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-work-sans, "Work Sans"), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains, "JetBrains Mono"), ui-monospace, monospace;
+
+  /* Radius: 4px controls / 6px bento cells (design.md §2.1, "reduced radius") */
+  --radius-sm: 4px;
+  --radius-bento: 6px;
+
+  /* Spacing (Heirloom Kitchen spacing block) */
+  --spacing-gutter: 12px;
+  --spacing-margin: 16px;
+  --spacing-cell: 16px;
+
+  /* Type scale */
+  --text-display: 1.5rem;
+  --text-display--line-height: 2rem;
+  --text-h2: 1.125rem;
+  --text-h2--line-height: 1.5rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
+  --text-meta--letter-spacing: 0.02em;
+  /* label-mono (DESIGN.md typography): JetBrains Mono 11px/14px, +0.05em */
+  --text-mono: 0.6875rem;
+  --text-mono--line-height: 0.875rem;
+  --text-mono--letter-spacing: 0.05em;
+}
+
+/* Fonts self-host via next/font/local in layout.tsx (development.md §0 — no
+ * CDN at runtime; woff2 files vendored in apps/web/public/fonts/). */
+
+html {
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+/* Hide scrollbars on horizontally scrolling chip rows (design.md §2.4 #3) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Diagonal-hatch placeholder (design.md §2.1/§5) */
+@utility hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--color-placeholder),
+    var(--color-placeholder) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}

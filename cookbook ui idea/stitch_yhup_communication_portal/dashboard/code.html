@@ -1,0 +1,349 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KitchenScale - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "inverse-primary": "#ffb693",
+                "on-secondary-fixed": "#022100",
+                "on-surface-variant": "#574239",
+                "inverse-on-surface": "#ffede5",
+                "surface-container-high": "#ffe3d4",
+                "surface": "#fff8f5",
+                "secondary": "#3f6833",
+                "secondary-container": "#bdedaa",
+                "on-secondary-container": "#436d37",
+                "primary-fixed": "#ffdbcc",
+                "on-secondary-fixed-variant": "#28501e",
+                "tertiary": "#00677d",
+                "secondary-fixed-dim": "#a4d393",
+                "surface-container-low": "#fff1ea",
+                "tertiary-fixed": "#b2ebff",
+                "error": "#ba1a1a",
+                "surface-tint": "#a14100",
+                "on-tertiary-fixed": "#001f27",
+                "background": "#fff8f5",
+                "surface-container": "#ffeadf",
+                "on-background": "#29170d",
+                "on-tertiary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#57d6f8",
+                "turmeric-yellow": "#EAB308",
+                "surface-variant": "#fedcca",
+                "error-container": "#ffdad6",
+                "espresso-brown": "#2D1B10",
+                "on-surface": "#29170d",
+                "on-tertiary-fixed-variant": "#004e5e",
+                "on-primary-fixed": "#351000",
+                "on-primary-container": "#5a2100",
+                "surface-container-highest": "#fedcca",
+                "on-primary-fixed-variant": "#7a2f00",
+                "secondary-fixed": "#c0f0ad",
+                "surface-dim": "#f5d3c1",
+                "on-error": "#ffffff",
+                "outline-variant": "#dec0b4",
+                "surface-bright": "#fff8f5",
+                "hatch-placeholder": "#E5E1DB",
+                "inverse-surface": "#402c20",
+                "on-primary": "#ffffff",
+                "on-tertiary-container": "#003845",
+                "surface-container-lowest": "#ffffff",
+                "primary": "#a14100",
+                "tertiary-container": "#00a9ca",
+                "primary-container": "#ef7a3c",
+                "on-error-container": "#93000a",
+                "primary-fixed-dim": "#ffb693",
+                "outline": "#8a7267",
+                "warm-cream": "#FDF8F2"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "12px",
+                "cell-padding": "16px",
+                "grid-base": "4px",
+                "margin-mobile": "16px",
+                "margin-desktop": "24px"
+        },
+        "fontFamily": {
+                "display-h1": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-mono": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Work Sans"
+                ],
+                "headline-h2": [
+                        "Plus Jakarta Sans"
+                ],
+                "meta-small": [
+                        "Work Sans"
+                ],
+                "display-h1-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-md": [
+                        "Work Sans"
+                ]
+        },
+        "fontSize": {
+                "display-h1": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-mono": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-h2": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "meta-small": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "display-h1-mobile": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .bento-cell {
+            border: 1px solid #dec0b4;
+            border-radius: 4px;
+            background-color: #fff8f5;
+        }
+        .hatch-pattern {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, #E5E1DB 10px, #E5E1DB 20px);
+        }
+        /* Mobile specific bottom padding to clear the BottomNavBar */
+        .content-area {
+            padding-bottom: 80px;
+        }
+        @media (min-width: 768px) {
+            .content-area {
+                padding-bottom: 24px;
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-warm-cream text-espresso-brown font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-warm-cream border-b border-outline-variant transition-colors duration-200 docked full-width top-0">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden bento-cell">
+<img class="w-full h-full object-cover" data-alt="A clean, modern headshot of a person looking forward, neutral lighting, minimalist white background, pragmatic and professional aesthetic suited for a clean bento-box UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcFfxfgGOigB-nRzMZylAVALF4Ga5tyTB4WK7zR2wCFiyhfa1lmN3qRtqQKQU8CnnF7SDSq24_wWzmweBJLZlMfUk-1LjJ0mpv4B6KqFPoycb-eqYa5GhJxGkhX40qDoftk29kJpR2i-ld6xnZTCl6K7KGssGvbvDStLee_AcvCpvFDlU-ZotVAgVokyIY9jeGYq3fpwlkMEb2UWFOc_7dwFgir9PV286cf_CTplOTVi3BIkLJhx-_">
+</div>
+<h1 class="font-display-h1-mobile text-display-h1-mobile font-bold text-espresso-brown">KitchenScale</h1>
+</div>
+<button class="flex items-center justify-center p-2 rounded-lg hover:bg-surface-container-low transition-colors duration-200">
+<span aria-label="notifications" class="material-symbols-outlined text-espresso-brown font-headline-h2 text-headline-h2">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto content-area px-margin-mobile md:px-margin-desktop py-6">
+<!-- Bento Grid Container -->
+<div class="grid grid-cols-4 md:grid-cols-6 gap-gutter max-w-5xl mx-auto">
+<!-- 1. Upcoming Recipe (Large Hero Cell) -->
+<div class="bento-cell col-span-4 md:col-span-4 flex flex-col overflow-hidden relative">
+<div class="h-48 md:h-64 w-full relative">
+<img class="w-full h-full object-cover" data-alt="A top-down, brightly lit, high-quality photograph of a vibrant, healthy meal bowl featuring roasted vegetables, quinoa, and a perfectly cooked soft-boiled egg. The image emphasizes clean lines and fresh ingredients, fitting perfectly within a pragmatic, bento-box design system. Low shadow, clear focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6apW32FXVp2PZNDs2kZ2A3_fBmXDahWfgPbdv402_O24Rk-dl0QzWmT0tqLhIMvTmKgS1AodxzDpdqLTT7TcTyZ-x4X2iFGHx1NfVEtp3XW2DkTbF-bUvF93Og2jR283clfuHwmXeKl2xDT81plfsLNm5OSxMpBCF6oB-IiuAwDmyiPWhW0akQs9YRyGBOLGt_nQOUQHCUOhu5zuy0g3D08-U903glFILJy3oSRXDMwba3NbYN5I8">
+<div class="absolute top-4 left-4 bg-surface px-2 py-1 rounded bento-cell font-label-mono text-label-mono text-espresso-brown uppercase shadow-sm">
+                        Upcoming Meal
+                    </div>
+</div>
+<div class="p-cell-padding flex flex-col justify-between flex-1 gap-4">
+<div>
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown mb-2">Harissa Roasted Carrot &amp; Quinoa Bowl</h2>
+<div class="flex items-center gap-4 text-on-surface-variant font-meta-small text-meta-small">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> 35 min</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">restaurant</span> 2 Servings</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">local_fire_department</span> 450 kcal</span>
+</div>
+</div>
+<div class="flex justify-end">
+<button class="font-meta-small text-meta-small text-primary-container font-bold flex items-center gap-1 hover:underline group">
+                            Start Prep <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 2. Meal Planner Entry & Quick Actions (Side Cells on Desktop) -->
+<div class="col-span-4 md:col-span-6 mt-2">
+<h3 class="font-body-md text-body-md font-bold text-espresso-brown mb-3 px-1">Planned for Today</h3>
+<div class="grid grid-cols-3 gap-gutter">
+<!-- Breakfast -->
+<div class="bento-cell flex flex-col hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="h-24 md:h-32 w-full hatch-pattern border-b border-outline-variant relative">
+<!-- Using hatch pattern for missing thumbnail as per bento guidelines -->
+<div class="absolute inset-0 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[32px] text-on-surface-variant">bakery_dining</span>
+</div>
+</div>
+<div class="p-3">
+<div class="font-label-mono text-label-mono text-on-surface-variant uppercase mb-1">Breakfast</div>
+<div class="font-body-md text-body-md truncate">Overnight Oats</div>
+</div>
+</div>
+<!-- Lunch -->
+<div class="bento-cell flex flex-col hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="h-24 md:h-32 w-full hatch-pattern border-b border-outline-variant relative">
+<img class="w-full h-full object-cover" data-alt="A clean, close-up shot of a minimalist sandwich wrap cut in half, revealing fresh greens and grilled chicken, resting on a stark white surface. The lighting is bright and even, highlighting the textures of the ingredients without deep shadows, perfectly suited for a clean bento-box UI layout." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAymfkOYJ003PmJon8D3bokyAwANJoFdrHpKWIv8ZfpyW-3u-n48gASUikvAKTXiZ2MPSU6-UEX43GFXNfrspleJnytV6kk8GQK8bBaYC4AjMAsyf8bDUMUSAn4Lk5GuOdBveRkxZwtnT0TdTrenvcN5O5O7yWypqJ5b8bbwZgsdjh0rpvSJV4Qi6QHyaSAfXfRvdDQHVvFKnLpxvmB35jAeF-cH-nMBnSkXF8WbwhMpcNbVDYTNwyc">
+</div>
+<div class="p-3">
+<div class="font-label-mono text-label-mono text-on-surface-variant uppercase mb-1">Lunch</div>
+<div class="font-body-md text-body-md truncate">Chicken Wrap</div>
+</div>
+</div>
+<!-- Dinner -->
+<div class="bento-cell flex flex-col hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="h-24 md:h-32 w-full relative">
+<div class="absolute inset-0 bg-primary-container bg-opacity-10 flex items-center justify-center border-b border-outline-variant">
+<span class="font-meta-small text-meta-small text-primary-container text-center px-2">Planned<br>(See Above)</span>
+</div>
+</div>
+<div class="p-3">
+<div class="font-label-mono text-label-mono text-on-surface-variant uppercase mb-1">Dinner</div>
+<div class="font-body-md text-body-md truncate">Quinoa Bowl</div>
+</div>
+</div>
+</div>
+</div><div class="col-span-4 md:col-span-2 flex flex-col gap-gutter">
+<!-- Meal Planner Summary -->
+<div class="bento-cell p-cell-padding flex-1 flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-md text-body-md font-bold text-espresso-brown">Weekly Planner</h3>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
+</div>
+<div class="flex flex-col gap-3 flex-1 justify-center">
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+<span class="font-meta-small text-meta-small text-on-surface-variant">Today</span>
+<span class="font-label-mono text-label-mono text-primary-container">3 MEALS</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant opacity-60">
+<span class="font-meta-small text-meta-small text-on-surface-variant">Tomorrow</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">2 MEALS</span>
+</div>
+<div class="flex justify-between items-center opacity-40">
+<span class="font-meta-small text-meta-small text-on-surface-variant">Wed</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">PLAN</span>
+</div>
+</div>
+<button class="mt-4 w-full py-2 bg-surface border border-outline-variant rounded font-meta-small text-meta-small text-espresso-brown hover:bg-surface-container-low transition-colors">
+                        View Full Schedule
+                    </button>
+</div>
+<!-- Quick Add -->
+<div class="bento-cell p-cell-padding flex items-center justify-center bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer border-dashed border-outline">
+<div class="flex items-center gap-2 text-espresso-brown">
+<span class="material-symbols-outlined">add</span>
+<span class="font-body-md text-body-md font-medium">Log New Recipe</span>
+</div>
+</div>
+</div>
+<!-- 3. Meals Planned for the Day Row -->
+
+<!-- 4. Grocery List Summary -->
+<div class="bento-cell col-span-4 md:col-span-6 mt-2 p-cell-padding flex flex-col md:flex-row gap-4 md:items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div>
+<h3 class="font-body-md text-body-md font-bold text-espresso-brown">Active Grocery List</h3>
+<p class="font-meta-small text-meta-small text-on-surface-variant">14 items needed for this week's plan</p>
+</div>
+</div>
+<div class="flex gap-2 flex-wrap">
+<span class="px-2 py-1 bento-cell font-label-mono text-label-mono text-espresso-brown bg-surface-container-low">Produce (6)</span>
+<span class="px-2 py-1 bento-cell font-label-mono text-label-mono text-espresso-brown bg-surface-container-low">Pantry (5)</span>
+<span class="px-2 py-1 bento-cell font-label-mono text-label-mono text-espresso-brown bg-surface-container-low">Dairy (3)</span>
+</div>
+<button class="bg-primary-container text-on-primary px-4 py-2 rounded font-meta-small text-meta-small hover:bg-opacity-90 transition-opacity whitespace-nowrap">
+                    View List
+                </button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only shell) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-warm-cream border-t border-outline-variant active:scale-95 transition-all duration-150 docked full-width bottom-0">
+<!-- Active: Home -->
+<button class="flex flex-col items-center justify-center text-primary-container font-bold w-16 h-12">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">home</span>
+<span class="font-meta-small text-meta-small mt-1">Home</span>
+</button>
+<!-- Inactive: Search -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-espresso-brown transition-colors w-16 h-12">
+<span class="material-symbols-outlined">search</span>
+<span class="font-meta-small text-meta-small mt-1">Search</span>
+</button>
+<!-- Inactive: Planner -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-espresso-brown transition-colors w-16 h-12">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-meta-small text-meta-small mt-1">Planner</span>
+</button>
+<!-- Inactive: Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-espresso-brown transition-colors w-16 h-12">
+<span class="material-symbols-outlined">person</span>
+<span class="font-meta-small text-meta-small mt-1">Profile</span>
+</button>
+</nav>
+<!-- Desktop Nav Sidebar (Placeholder for wide screens, usually left aligned in standard setups, but bento guidelines suggest focusing on the grid. We will hide the bottom nav on md and rely on the TopAppBar and grid content for navigation) -->
+
+
+</body></html>

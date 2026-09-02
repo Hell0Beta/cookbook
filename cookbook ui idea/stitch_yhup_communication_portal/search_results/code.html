@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Search - KitchenScale</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "inverse-primary": "#ffb693",
+                "on-secondary-fixed": "#022100",
+                "on-surface-variant": "#574239",
+                "inverse-on-surface": "#ffede5",
+                "surface-container-high": "#ffe3d4",
+                "surface": "#fff8f5",
+                "secondary": "#3f6833",
+                "secondary-container": "#bdedaa",
+                "on-secondary-container": "#436d37",
+                "primary-fixed": "#ffdbcc",
+                "on-secondary-fixed-variant": "#28501e",
+                "tertiary": "#00677d",
+                "secondary-fixed-dim": "#a4d393",
+                "surface-container-low": "#fff1ea",
+                "tertiary-fixed": "#b2ebff",
+                "error": "#ba1a1a",
+                "surface-tint": "#a14100",
+                "on-tertiary-fixed": "#001f27",
+                "background": "#fff8f5",
+                "surface-container": "#ffeadf",
+                "on-background": "#29170d",
+                "on-tertiary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#57d6f8",
+                "turmeric-yellow": "#EAB308",
+                "surface-variant": "#fedcca",
+                "error-container": "#ffdad6",
+                "espresso-brown": "#2D1B10",
+                "on-surface": "#29170d",
+                "on-tertiary-fixed-variant": "#004e5e",
+                "on-primary-fixed": "#351000",
+                "on-primary-container": "#5a2100",
+                "surface-container-highest": "#fedcca",
+                "on-primary-fixed-variant": "#7a2f00",
+                "secondary-fixed": "#c0f0ad",
+                "surface-dim": "#f5d3c1",
+                "on-error": "#ffffff",
+                "outline-variant": "#dec0b4",
+                "surface-bright": "#fff8f5",
+                "hatch-placeholder": "#E5E1DB",
+                "inverse-surface": "#402c20",
+                "on-primary": "#ffffff",
+                "on-tertiary-container": "#003845",
+                "surface-container-lowest": "#ffffff",
+                "primary": "#a14100",
+                "tertiary-container": "#00a9ca",
+                "primary-container": "#ef7a3c",
+                "on-error-container": "#93000a",
+                "primary-fixed-dim": "#ffb693",
+                "outline": "#8a7267",
+                "warm-cream": "#FDF8F2"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "12px",
+                "cell-padding": "16px",
+                "grid-base": "4px",
+                "margin-mobile": "16px",
+                "margin-desktop": "24px"
+        },
+        "fontFamily": {
+                "display-h1": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-mono": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Work Sans"
+                ],
+                "headline-h2": [
+                        "Plus Jakarta Sans"
+                ],
+                "meta-small": [
+                        "Work Sans"
+                ],
+                "display-h1-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-md": [
+                        "Work Sans"
+                ]
+        },
+        "fontSize": {
+                "display-h1": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-mono": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-h2": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "meta-small": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "display-h1-mobile": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Hide scrollbar for horizontal scrolling elements */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-warm-cream text-espresso-brown font-body-md min-h-screen flex flex-col pt-16 pb-20 md:pb-0">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant fixed top-0 left-0 transition-colors duration-200">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A macro shot of fresh basil leaves on a white marble countertop, studio lighting, crisp shadows, high key, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRivN0NoN6sVpMSoLDCRdToiiAd83_yx-Dzb8xUu2k-zLMzkZ1CkKnq7y19BXHvA4ATWmaEe3E2S_30LBesYEN-6ItX1Mprv4PxsTjODlwykDN510z20jYV4mgLfmKpafht7GlCbJZGYj00X0CiV4H1AOTbJbb1sUTXUrhMNXg209QAP13g1xkqdyzlO6LYavpjBZnEnlLS2z5lmz24gU86EdXLRnIGCSPj13-vW5dkqoJz2QIHyw3"/>
+</div>
+<h1 class="font-display-h1-mobile text-display-h1-mobile font-bold text-primary dark:text-primary-fixed-dim">KitchenScale</h1>
+</div>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-lg transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="notifications" data-weight="regular">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col md:max-w-3xl md:mx-auto md:w-full md:px-margin-desktop md:pt-margin-desktop md:pb-margin-desktop w-full px-margin-mobile pt-margin-mobile overflow-y-auto">
+<!-- Search Input -->
+<div class="mb-4">
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="search">search</span>
+</div>
+<input class="w-full pl-10 pr-4 py-3 bg-surface border border-outline-variant rounded-lg text-body-lg font-body-lg text-espresso-brown placeholder-on-surface-variant focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors shadow-sm" placeholder="Search recipes, ingredients..." type="text"/>
+</div>
+</div>
+<!-- Filter Chips (Horizontally Scrollable) -->
+<div class="mb-6 overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-2 min-w-max pb-2">
+<button class="flex items-center justify-center w-8 h-8 bg-surface border border-outline-variant rounded-lg text-espresso-brown hover:bg-surface-container-low transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+</button>
+<button class="px-3 py-1.5 bg-primary-container text-on-primary border border-primary-container rounded-lg font-meta-small text-meta-small flex-shrink-0 hover:opacity-90 transition-opacity">
+                    Dinner
+                </button>
+<button class="px-3 py-1.5 bg-surface text-espresso-brown border border-outline-variant rounded-lg font-meta-small text-meta-small flex-shrink-0 hover:bg-surface-container-low transition-colors">
+                    Under 30m
+                </button>
+<button class="px-3 py-1.5 bg-surface text-espresso-brown border border-outline-variant rounded-lg font-meta-small text-meta-small flex-shrink-0 hover:bg-surface-container-low transition-colors">
+                    Vegetarian
+                </button>
+<button class="px-3 py-1.5 bg-surface text-espresso-brown border border-outline-variant rounded-lg font-meta-small text-meta-small flex-shrink-0 hover:bg-surface-container-low transition-colors">
+                    High Protein
+                </button>
+<button class="px-3 py-1.5 bg-surface text-espresso-brown border border-outline-variant rounded-lg font-meta-small text-meta-small flex-shrink-0 hover:bg-surface-container-low transition-colors">
+                    Meal Prep
+                </button>
+</div>
+</div>
+<!-- Search Results (Bento List) -->
+<div class="flex flex-col gap-3">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown mb-2 hidden md:block">Search Results</h2>
+<!-- Result Item 1 -->
+<div class="flex items-center p-3 bg-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-lg flex-shrink-0 overflow-hidden bg-surface-container border border-outline-variant">
+<img alt="Salmon Bowl" class="w-full h-full object-cover" data-alt="A top-down view of a perfectly seared salmon fillet resting on a bed of quinoa with a bright green lemon-dill sauce drizzle, studio lighting, crisp, minimalist plating, white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZwaitJKJ0Pk8YRCKZH-tFjv7YSPe0RL3Z7umojeynZPQH0rsT4afyAlHwnoQeA1Gy_RAFyg3NaKaotZ-NFXCXxf0hAmH0fcKYj9HXKmve9tSC_P9QaRvRwyW9FV9kvOocYQugC-eqo79W-sP2rsXpM9AQZj0dvxS2hOAA8mKSNBXKYn2iwUz1O_98Ki47W-t--XVFV6cuA4VcLURY7B_Ey28RBdRrjsaKK-jOClsmYuEqyVEDzw3d"/>
+</div>
+<div class="ml-4 flex-grow min-w-0">
+<h3 class="font-body-lg text-body-lg text-espresso-brown truncate group-hover:text-primary-container transition-colors">Crispy Skin Salmon Bowl</h3>
+<div class="flex items-center gap-3 mt-1 font-label-mono text-label-mono text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 25m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="restaurant">restaurant</span> 480 kcal</span>
+</div>
+</div>
+<button class="ml-2 w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary-container hover:bg-surface-container transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+<!-- Result Item 2 -->
+<div class="flex items-center p-3 bg-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-lg flex-shrink-0 overflow-hidden bg-surface-container border border-outline-variant">
+<img alt="Lentil Stew" class="w-full h-full object-cover" data-alt="A close-up of a steaming bowl of dark, rich lentil stew garnished with fresh parsley and a slice of crusty sourdough bread on a wooden board, warm cinematic lighting, dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA32vV9dBlUFaIv-d-J2zg4IuzkWTQf9plnaO4YAL7Tzd7COTZNFQDCOwimIo-DVorMqIBgPMeC2UAOdBUjACrUXdJggLD_fO4QF2bBJDnAJPDnttGRu0Z0YDg-cxuHytiOZSzNuJwPBGiNiQ1GDmuRHcCCr8n_-BE1j4Kd7Ra0tf93285rkT8h16-aUcH1ghZfENlXz4BynnWunkiEPSGkerxmWX444vL5qedubzW4fEhShuLEpktB"/>
+</div>
+<div class="ml-4 flex-grow min-w-0">
+<h3 class="font-body-lg text-body-lg text-espresso-brown truncate group-hover:text-primary-container transition-colors">Spiced Lentil Stew</h3>
+<div class="flex items-center gap-3 mt-1 font-label-mono text-label-mono text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 45m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="restaurant">restaurant</span> 320 kcal</span>
+</div>
+</div>
+<button class="ml-2 w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary-container hover:bg-surface-container transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+<!-- Result Item 3 -->
+<div class="flex items-center p-3 bg-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-lg flex-shrink-0 overflow-hidden bg-surface-container border border-outline-variant">
+<img alt="Avocado Toast" class="w-full h-full object-cover" data-alt="A vibrant green avocado toast on thick artisanal bread, topped with a soft-boiled egg cut in half, revealing a runny yolk, sprinkled with red pepper flakes and microgreens, bright morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2S00nsVsu6ccBdcfUYIx0VEVxguKMZCDGAr7M2Kz-lN7Tzk2rQ0Veq-OYSGBeJbU4nXaRrhJPteqvpeL4j1d7o6emfUMF6PUG_R6On1m352U0lBRvf0gC3lPpNA0voGEor986qhpiJR1bZGdoOxIMXS4WJxuGgVvJjWJIZr9rsAFuENiTAT_-0dauChDOyoHHoSmlld3b-JlBGkKvi0oYJWB2mQmUqhmUzP-Zqjbr2JSigxS7z4SV"/>
+</div>
+<div class="ml-4 flex-grow min-w-0">
+<h3 class="font-body-lg text-body-lg text-espresso-brown truncate group-hover:text-primary-container transition-colors">Elevated Avocado Toast</h3>
+<div class="flex items-center gap-3 mt-1 font-label-mono text-label-mono text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 10m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="restaurant">restaurant</span> 380 kcal</span>
+</div>
+</div>
+<button class="ml-2 w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary-container hover:bg-surface-container transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+<!-- Result Item 4 -->
+<div class="flex items-center p-3 bg-surface border border-outline-variant rounded-xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-lg flex-shrink-0 overflow-hidden bg-surface-container border border-outline-variant">
+<img alt="Mushroom Risotto" class="w-full h-full object-cover" data-alt="A macro shot of a creamy mushroom risotto with shaved parmesan and truffle oil drizzled over the top, served in a shallow white ceramic bowl, soft natural window light, elegant styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsWKQsodne13IsIi48AKsKiB_HfLb8a1-fGOlM2Wc_qKo_s3Fwjc5qOIW0iYHQz224VrVoErWuTXu9u_U-OU3Ado5ERPLM1WdlFQY3XwVjfs4DSPw0LwIozdjoVWXHpXTR7E2xPSVNE03jhyouevBPxQ0pkUH58bnLYtNRl57Js3oXXdXlJUJtFlDP1gHDGDRpH-edtYHyNuA46v4c3ONd-xkrwncuHBf78lFFqHoKQy-SgvvHollR"/>
+</div>
+<div class="ml-4 flex-grow min-w-0">
+<h3 class="font-body-lg text-body-lg text-espresso-brown truncate group-hover:text-primary-container transition-colors">Truffle Mushroom Risotto</h3>
+<div class="flex items-center gap-3 mt-1 font-label-mono text-label-mono text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 40m</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]" data-icon="restaurant">restaurant</span> 550 kcal</span>
+</div>
+</div>
+<button class="ml-2 w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary-container hover:bg-surface-container transition-colors flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+</div>
+<!-- End of List Indicator -->
+<div class="text-center py-6">
+<span class="font-meta-small text-meta-small text-on-surface-variant">No more results for this combination</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface dark:bg-surface md:hidden border-t border-outline-variant transition-all duration-150">
+<!-- Home (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-12" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="home" data-weight="regular">home</span>
+<span class="font-meta-small text-meta-small">Home</span>
+</a>
+<!-- Search (Active) -->
+<a class="flex flex-col items-center justify-center text-primary-container dark:text-primary-container font-bold active:scale-95 transition-all duration-150 w-16 h-12" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="search" data-weight="fill" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="font-meta-small text-meta-small">Search</span>
+</a>
+<!-- Planner (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-12" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="calendar_today" data-weight="regular">calendar_today</span>
+<span class="font-meta-small text-meta-small">Planner</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-12" href="#">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="person" data-weight="regular">person</span>
+<span class="font-meta-small text-meta-small">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple visual feedback for list items
+        document.querySelectorAll('.group button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const icon = button.querySelector('.material-symbols-outlined');
+                // Temporary visual change to indicate add action
+                icon.textContent = 'check_circle';
+                button.classList.remove('text-on-surface-variant', 'hover:text-primary-container');
+                button.classList.add('text-primary-container', 'bg-surface-container');
+                
+                setTimeout(() => {
+                    icon.textContent = 'add_circle';
+                    button.classList.add('text-on-surface-variant', 'hover:text-primary-container');
+                    button.classList.remove('text-primary-container', 'bg-surface-container');
+                }, 1000);
+            });
+        });
+    </script>
+</body></html>

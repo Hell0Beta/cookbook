@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KitchenScale - Meal Planner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "inverse-primary": "#ffb693",
+                "on-secondary-fixed": "#022100",
+                "on-surface-variant": "#574239",
+                "inverse-on-surface": "#ffede5",
+                "surface-container-high": "#ffe3d4",
+                "surface": "#fff8f5",
+                "secondary": "#3f6833",
+                "secondary-container": "#bdedaa",
+                "on-secondary-container": "#436d37",
+                "primary-fixed": "#ffdbcc",
+                "on-secondary-fixed-variant": "#28501e",
+                "tertiary": "#00677d",
+                "secondary-fixed-dim": "#a4d393",
+                "surface-container-low": "#fff1ea",
+                "tertiary-fixed": "#b2ebff",
+                "error": "#ba1a1a",
+                "surface-tint": "#a14100",
+                "on-tertiary-fixed": "#001f27",
+                "background": "#fff8f5",
+                "surface-container": "#ffeadf",
+                "on-background": "#29170d",
+                "on-tertiary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#57d6f8",
+                "turmeric-yellow": "#EAB308",
+                "surface-variant": "#fedcca",
+                "error-container": "#ffdad6",
+                "espresso-brown": "#2D1B10",
+                "on-surface": "#29170d",
+                "on-tertiary-fixed-variant": "#004e5e",
+                "on-primary-fixed": "#351000",
+                "on-primary-container": "#5a2100",
+                "surface-container-highest": "#fedcca",
+                "on-primary-fixed-variant": "#7a2f00",
+                "secondary-fixed": "#c0f0ad",
+                "surface-dim": "#f5d3c1",
+                "on-error": "#ffffff",
+                "outline-variant": "#dec0b4",
+                "surface-bright": "#fff8f5",
+                "hatch-placeholder": "#E5E1DB",
+                "inverse-surface": "#402c20",
+                "on-primary": "#ffffff",
+                "on-tertiary-container": "#003845",
+                "surface-container-lowest": "#ffffff",
+                "primary": "#a14100",
+                "tertiary-container": "#00a9ca",
+                "primary-container": "#ef7a3c",
+                "on-error-container": "#93000a",
+                "primary-fixed-dim": "#ffb693",
+                "outline": "#8a7267",
+                "warm-cream": "#FDF8F2"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "12px",
+                "cell-padding": "16px",
+                "grid-base": "4px",
+                "margin-mobile": "16px",
+                "margin-desktop": "24px"
+        },
+        "fontFamily": {
+                "display-h1": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-mono": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Work Sans"
+                ],
+                "headline-h2": [
+                        "Plus Jakarta Sans"
+                ],
+                "meta-small": [
+                        "Work Sans"
+                ],
+                "display-h1-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-md": [
+                        "Work Sans"
+                ]
+        },
+        "fontSize": {
+                "display-h1": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-mono": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-h2": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "meta-small": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "display-h1-mobile": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for cleaner mobile look */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-warm-cream text-espresso-brown font-body-md h-full w-full flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 border-b border-outline-variant flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-surface">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant shrink-0">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close-up studio portrait of a professional chef wearing a clean white apron. Soft, high-key lighting creates a bright, modern aesthetic typical of a clean, minimalist kitchen setting. Crisp focus on the face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6aLCVn_kui2w6g2KD70dnQ6FiDQyMEsCtd-Es-3k5CijntRnR2RDdVxpKgX_bc2f0OleRNfoK40MG4W5Pvu6IKToRAiI7vzqDyH_7kV_Hpxwgq-WwQtVj-iM3OuU78BUqG-s_CdfMNEvCRNAvrYbzbdzN9ZcRhVZSXkUhEWq9WELtB7olHoRUfa0vdH6FPZSMI-1hu2zqVpkMnQIRyEcqHsJ2rwnuAeGW2thlv7AyShBeVIRH46KC"/>
+</div>
+<h1 class="font-display-h1-mobile text-display-h1-mobile font-bold text-espresso-brown text-center flex-grow">KitchenScale</h1>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 rounded shrink-0">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto pb-20 pt-4 px-margin-mobile">
+<!-- Week Navigator -->
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown">Oct 16 - 22</h2>
+<div class="flex gap-2">
+<button class="p-1 border border-outline-variant rounded text-on-surface-variant bg-surface"><span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span></button>
+<button class="p-1 border border-outline-variant rounded text-on-surface-variant bg-surface"><span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+<!-- Weekly Bento Grid (Mobile View) -->
+<div class="grid grid-cols-4 gap-grid-base mb-6 overflow-x-auto pb-2">
+<!-- Day Cell: Past -->
+<div class="flex flex-col border border-outline-variant rounded bg-surface p-2 text-center opacity-60 min-w-[64px]">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Mon</span>
+<span class="font-body-md text-body-md font-bold mt-1">16</span>
+<div class="mt-2 h-1 w-full bg-surface-container-high rounded"></div>
+</div>
+<!-- Day Cell: Today (Active) -->
+<div class="flex flex-col border border-primary-container rounded bg-surface p-2 text-center min-w-[64px] relative">
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-primary-container rounded-full"></div>
+<span class="font-label-mono text-label-mono text-primary-container">Tue</span>
+<span class="font-body-md text-body-md font-bold text-espresso-brown mt-1">17</span>
+<div class="flex justify-center gap-1 mt-2">
+<div class="w-2 h-2 rounded-full bg-secondary-fixed"></div>
+<div class="w-2 h-2 rounded-full bg-secondary-fixed"></div>
+</div>
+</div>
+<!-- Day Cell: Future -->
+<div class="flex flex-col border border-outline-variant rounded bg-surface p-2 text-center min-w-[64px]">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Wed</span>
+<span class="font-body-md text-body-md font-bold text-espresso-brown mt-1">18</span>
+<div class="mt-2 h-1 w-full border-t border-dashed border-outline-variant"></div>
+</div>
+<!-- Day Cell: Future -->
+<div class="flex flex-col border border-outline-variant rounded bg-surface p-2 text-center min-w-[64px]">
+<span class="font-label-mono text-label-mono text-on-surface-variant">Thu</span>
+<span class="font-body-md text-body-md font-bold text-espresso-brown mt-1">19</span>
+<div class="mt-2 h-1 w-full border-t border-dashed border-outline-variant"></div>
+</div>
+</div>
+<!-- Recipes for Selected Day -->
+<div class="mb-2 flex items-center justify-between">
+<h3 class="font-headline-h2 text-headline-h2 text-espresso-brown">Tuesday, Oct 17</h3>
+<span class="font-label-mono text-label-mono px-2 py-1 bg-surface-container rounded border border-outline-variant">2 Meals</span>
+</div>
+<div class="flex flex-col gap-grid-base mb-24">
+<!-- Breakfast Slot -->
+<div class="border border-outline-variant rounded bg-surface overflow-hidden flex h-24 relative">
+<div class="w-24 shrink-0 bg-surface-container-high">
+<img alt="Oatmeal Bowl" class="w-full h-full object-cover" data-alt="A top-down view of a modern ceramic bowl filled with creamy oatmeal, topped with symmetrically arranged sliced strawberries, blueberries, and a drizzle of honey. Shot in bright, natural morning light on a clean, light grey slate background reflecting a crisp bento-box aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH7jL9rBvalQol5YG3Iob919onHp7pyVEFRqpA5ESX80vpXLGFSVhuQBhoZw4qZUHu_NGU1f1nGmed_jif4np67KIGyqG1Ba35Bp-B2AvpxITYF9UG9AKfPcQ64Ge1fQVAEphJV_8xP0ngo5mVctciReM2mK7mOPj0rDZqHx5Sh8IzFlcNbCYy0lK4yrM0FS_39qzJaxe0yMc0cWFuosM6Q-EwirjgeWVO8bybIxYwFqJU6QUXcR8o"/>
+</div>
+<div class="p-3 flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">Breakfast</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-body-md text-body-md font-medium text-espresso-brown mt-1 truncate">Berry Power Oats</h4>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px] mr-1" data-icon="schedule">schedule</span> 10m</span>
+<div class="h-3 w-px bg-outline-variant"></div>
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px] mr-1" data-icon="local_fire_department">local_fire_department</span> 320 kcal</span>
+</div>
+</div>
+</div>
+<!-- Lunch Slot (Empty) -->
+<button class="border border-dashed border-outline-variant rounded bg-surface/50 h-16 flex items-center justify-center gap-2 text-on-surface-variant hover:bg-surface transition-colors">
+<span class="material-symbols-outlined text-primary-container" data-icon="add">add</span>
+<span class="font-meta-small text-meta-small uppercase tracking-wider">Add Lunch</span>
+</button>
+<!-- Dinner Slot -->
+<div class="border border-outline-variant rounded bg-surface overflow-hidden flex h-24 relative">
+<div class="w-24 shrink-0 bg-surface-container-high">
+<img alt="Salmon Dinner" class="w-full h-full object-cover" data-alt="A beautifully plated portion of seared salmon with a side of crisp asparagus spears and quinoa, presented on a minimalist matte black plate. The lighting is sharp and directional, creating distinct textures against a stark white bento-grid style background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdTLHUNio4qovSRZMUV7rGn99_Jv2S1axnTQt3tYFGAqCuncIJBLY-LMtw1Vyp0OFMvyjv9BwnFdWIvtovbVRyh2PSU4hiEK4VVpjf-HYIhEy_WG-w_uAQ3PILSOeX3GmNzfe4M8ogUTnaSuKdEH_LGdiYOc2mJtUJ6TP2_VsDzOqBg7d454qyWriCnp2fHh1p-z08eKGeOyUDzA3WaKZJ2VvNXVnzpT-elqOup2dEH8ClB-n3Yu7N"/>
+</div>
+<div class="p-3 flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">Dinner</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="more_vert">more_vert</span>
+</div>
+<h4 class="font-body-md text-body-md font-medium text-espresso-brown mt-1 truncate">Miso Glazed Salmon</h4>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px] mr-1" data-icon="schedule">schedule</span> 35m</span>
+<div class="h-3 w-px bg-outline-variant"></div>
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px] mr-1" data-icon="local_fire_department">local_fire_department</span> 640 kcal</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Add FAB (Contextual for Planner) -->
+<button class="fixed bottom-20 right-4 w-14 h-14 bg-primary-container text-on-primary rounded-full shadow-lg flex items-center justify-center hover:bg-primary-container/90 transition-transform active:scale-95 z-40 border border-outline-variant">
+<span class="material-symbols-outlined filled-icon text-2xl text-on-primary" data-icon="add">add</span>
+</button>
+</main>
+<!-- BottomNavBar -->
+<nav class="docked full-width bottom-0 border-t border-outline-variant fixed left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface">
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-all duration-150 hover:text-espresso-brown w-16 h-12">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-meta-small text-meta-small">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-all duration-150 hover:text-espresso-brown w-16 h-12">
+<span class="material-symbols-outlined mb-1" data-icon="search">search</span>
+<span class="font-meta-small text-meta-small">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary-container font-bold active:scale-95 transition-all duration-150 w-16 h-12 relative">
+<div class="absolute -top-3 w-12 h-1 rounded-full bg-primary-container"></div>
+<span class="material-symbols-outlined mb-1 filled-icon" data-icon="calendar_today">calendar_today</span>
+<span class="font-meta-small text-meta-small">Planner</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant active:scale-95 transition-all duration-150 hover:text-espresso-brown w-16 h-12">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-meta-small text-meta-small">Profile</span>
+</button>
+</nav>
+</body></html>

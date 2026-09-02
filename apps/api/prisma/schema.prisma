@@ -1,0 +1,226 @@
+// Data model per docs/development.md §3 "Data Model" — field names are contractual.
+// SQLite per development.md §0 (self-hosted, ≤5 users).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  displayName  String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  dietProfile    DietProfile?
+  recipes        Recipe[]
+  groceryLists   GroceryList[]
+  mealPlanEntries MealPlanEntry[]
+  favorites      Favorite[]
+  cookedEvents   CookedEvent[]
+  discoverSuggestions DiscoverSuggestion[]
+}
+
+model DietProfile {
+  id                 String  @id @default(cuid())
+  userId             String  @unique
+  dietTypes          String  @default("[]") // JSON array (SQLite has no native arrays)
+  allergies          String  @default("[]")
+  excludedIngredients String @default("[]")
+  preferredCuisines  String  @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Recipe {
+  id                String   @id @default(cuid())
+  userId            String?
+  title             String
+  description       String?
+  heroImageUrl      String?
+  baseServings      Int      @default(2)
+  totalTimeMinutes  Int? // derived: sum of step durations + prep buffer
+  sourceType        String   @default("manual") // manual | youtube_import | public_api | web_import
+  sourceUrl         String?
+  cuisine           String?
+  mealType          String?
+  difficulty        String?
+  dietTags          String   @default("[]") // JSON array
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user               User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredients        RecipeIngredient[]
+  steps              RecipeStep[]
+  notes              RecipeNote[]
+  tags               RecipeTag[]
+  mealPlanEntries    MealPlanEntry[]
+  favorites          Favorite[]
+  cookedEvents       CookedEvent[]
+  // Recipe → grocery traceability goes through GroceryListItem.sourceRecipeIds
+  // (JSON array), not a FK relation — no back-relation needed.
+}
+
+// Master/normalized ingredient dictionary — shared across recipes (development.md §3).
+model Ingredient {
+  id             String @id @default(cuid())
+  canonicalName  String @unique
+  category       String @default("other") // produce|dairy|meat|pantry|spice|frozen|bakery|other
+  defaultUnit    String @default("piece")
+
+  recipeIngredients RecipeIngredient[]
+  groceryListItems  GroceryListItem[]
+}
+
+model RecipeIngredient {
+  id              String  @id @default(cuid())
+  recipeId        String
+  ingredientId    String? // nullable: unmatched free-text ingredient
+  rawText         String
+  quantity        Float?  // nullable: "to taste" / "a pinch"
+  unit            String? // g|kg|ml|l|tsp|tbsp|cup|oz|lb|piece|pinch|to_taste
+  roleTag         String  @default("main") // main | swap (Tagging Engine, development.md §6)
+  swapSuggestions String  @default("[]") // JSON array of ingredient ids/names
+  sortOrder       Int     @default(0)
+
+  recipe     Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id])
+}
+
+model RecipeStep {
+  id              String  @id @default(cuid())
+  recipeId        String
+  stepNumber      Int
+  instructionText String
+  durationMinutes Int? // powers the in-app timer (design.md §3.3.2)
+  imageUrl        String?
+  sortOrder       Int     @default(0)
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+// Free-text blocks (development.md §7.1) — substitution notes, storage tips.
+model RecipeNote {
+  id       String @id @default(cuid())
+  recipeId String
+  text     String
+  sortOrder Int    @default(0)
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+// Generic nested filter-tag system (design.md §2.4.4, development.md §3).
+model Tag {
+  id         String  @id @default(cuid())
+  label      String
+  parentTagId String? // null = top-level ("Default Item"), non-null = nested child
+  tagType    String  // meal_type|cuisine|diet|prep_time|difficulty|ingredient_based|custom
+  userId     String? // null = system tag
+
+  recipes RecipeTag[]
+}
+
+model RecipeTag {
+  recipeId String
+  tagId    String
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, tagId])
+}
+
+model GroceryList {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("Grocery List")
+  status    String   @default("active") // active | archived
+  createdAt DateTime @default(now())
+
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items GroceryListItem[]
+}
+
+model GroceryListItem {
+  id                 String  @id @default(cuid())
+  groceryListId      String
+  ingredientId       String?
+  label              String? // display name snapshot — unmatched free-text items + manual adds
+  aggregatedQuantity Float?
+  unit               String?
+  category           String  @default("other")
+  isPurchased        Boolean @default(false)
+  sourceRecipeIds    String  @default("[]") // JSON array — traceability
+
+  groceryList GroceryList @relation(fields: [groceryListId], references: [id], onDelete: Cascade)
+  ingredient  Ingredient? @relation(fields: [ingredientId], references: [id])
+}
+
+model MealPlanEntry {
+  id             String   @id @default(cuid())
+  userId         String
+  date           String // yyyy-mm-dd
+  mealSlot       String? // breakfast|lunch|dinner|snack — null for custom-time entries
+  recipeId       String
+  servingsPlanned Int     @default(2)
+  scheduledAt    DateTime? // set for quick-add "in next X minutes" (development.md §7.2)
+  isUpcomingPin  Boolean  @default(false) // quick-add "Right now / #Upcoming"
+  createdAt      DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+// Favorited recipes — powers the Meal Planner's "Saved & Favorited" sidebar
+// (development.md §3, §11).
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+}
+
+// Cooking-mode opens — the Tier 1 recency signal (development.md §10: "recency
+// of similar recipes cooked"). Written when a meal-planned recipe is opened in
+// the reader, fires-and-forgets; never user-visible.
+model CookedEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  cookedAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, cookedAt])
+}
+
+// Tier 2 LLM "Discover" suggestions (development.md §10) — one row per
+// suggestion, replaced wholesale per user on each ~24h refresh. Structured
+// {title, summary, why_recommended} only: no source_url, no full recipe text.
+model DiscoverSuggestion {
+  id               String   @id @default(cuid())
+  userId           String
+  title            String
+  summary          String
+  whyRecommended   String
+  imageUrl         String?
+  // Set when the suggestion is a pointer into the local dataset (§10):
+  // the card links straight to the full recipe instead of expanding.
+  recipeId         String?
+  generatedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, generatedAt])
+}

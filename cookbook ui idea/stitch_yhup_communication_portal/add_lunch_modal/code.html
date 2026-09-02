@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KitchenScale - Add Lunch Modal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#bdedaa",
+                      "on-secondary-fixed-variant": "#28501e",
+                      "on-tertiary-container": "#003845",
+                      "tertiary-fixed": "#b2ebff",
+                      "inverse-primary": "#ffb693",
+                      "surface-bright": "#fff8f5",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#436d37",
+                      "on-error": "#ffffff",
+                      "warm-cream": "#FDF8F2",
+                      "background": "#fff8f5",
+                      "surface": "#fff8f5",
+                      "on-primary-container": "#5a2100",
+                      "surface-container-low": "#fff1ea",
+                      "inverse-surface": "#402c20",
+                      "on-tertiary-fixed": "#001f27",
+                      "surface-container-highest": "#fedcca",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#a4d393",
+                      "secondary": "#3f6833",
+                      "on-secondary-fixed": "#022100",
+                      "inverse-on-surface": "#ffede5",
+                      "on-primary-fixed-variant": "#7a2f00",
+                      "secondary-fixed": "#c0f0ad",
+                      "on-background": "#29170d",
+                      "primary-fixed": "#ffdbcc",
+                      "surface-variant": "#fedcca",
+                      "surface-tint": "#a14100",
+                      "on-primary-fixed": "#351000",
+                      "on-error-container": "#93000a",
+                      "on-tertiary": "#ffffff",
+                      "on-surface-variant": "#574239",
+                      "on-primary": "#ffffff",
+                      "on-surface": "#29170d",
+                      "turmeric-yellow": "#EAB308",
+                      "tertiary-container": "#00a9ca",
+                      "primary-container": "#ef7a3c",
+                      "outline-variant": "#dec0b4",
+                      "tertiary": "#00677d",
+                      "primary": "#a14100",
+                      "hatch-placeholder": "#E5E1DB",
+                      "error": "#ba1a1a",
+                      "surface-container-high": "#ffe3d4",
+                      "surface-dim": "#f5d3c1",
+                      "tertiary-fixed-dim": "#57d6f8",
+                      "espresso-brown": "#2D1B10",
+                      "primary-fixed-dim": "#ffb693",
+                      "surface-container": "#ffeadf",
+                      "on-tertiary-fixed-variant": "#004e5e",
+                      "outline": "#8a7267"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-desktop": "24px",
+                      "margin-mobile": "16px",
+                      "cell-padding": "16px",
+                      "grid-base": "4px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "headline-h2": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "meta-small": [
+                              "Work Sans"
+                      ],
+                      "body-md": [
+                              "Work Sans"
+                      ],
+                      "display-h1-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-lg": [
+                              "Work Sans"
+                      ],
+                      "display-h1": [
+                              "Plus Jakarta Sans"
+                      ]
+              },
+              "fontSize": {
+                      "headline-h2": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-mono": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "meta-small": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-h1-mobile": [
+                              "22px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-h1": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .bento-radius {
+            border-radius: 6px;
+        }
+        .bento-border {
+            border: 1px solid rgba(45, 27, 16, 0.15); /* espresso-brown with opacity */
+        }
+    </style>
+</head>
+<body class="h-full bg-surface antialiased flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Background Frame (Simulating the Meal Planner underneath) -->
+<iframe class="w-full max-w-[400px] h-full absolute inset-0 pointer-events-none mx-auto border-x border-outline-variant shadow-lg hidden md:block" src="{{DATA:SCREEN:SCREEN_3}}"></iframe>
+<div class="w-full max-w-[400px] h-full relative bg-surface md:border-x border-outline-variant shadow-lg flex flex-col">
+<!-- Mock Meal Planner Content (Visible underneath modal) -->
+<div class="flex-1 p-margin-mobile overflow-y-auto">
+<div class="h-32 bg-surface-container-low bento-radius bento-border mb-gutter"></div>
+<div class="h-32 bg-surface-container-low bento-radius bento-border mb-gutter"></div>
+<div class="h-32 bg-surface-container-low bento-radius bento-border mb-gutter"></div>
+</div>
+<!-- Overlay Backdrop -->
+<div class="absolute inset-0 bg-espresso-brown/60 z-40"></div>
+<!-- Bottom Sheet Modal -->
+<div class="absolute bottom-0 left-0 right-0 bg-warm-cream z-50 rounded-t-xl md:rounded-t-[6px] md:rounded-b-[6px] md:bottom-margin-desktop md:left-margin-mobile md:right-margin-mobile shadow-2xl flex flex-col max-h-[85vh] transition-transform duration-300 translate-y-0">
+<!-- Drag Handle (Mobile) -->
+<div class="w-full flex justify-center py-2 md:hidden">
+<div class="w-12 h-1 bg-outline-variant rounded-full"></div>
+</div>
+<!-- Modal Header & Search -->
+<div class="px-margin-mobile pt-margin-mobile pb-cell-padding border-b border-outline-variant/30 flex-shrink-0">
+<h2 class="font-display-h1-mobile text-display-h1-mobile text-espresso-brown mb-gutter">Add Lunch</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low text-espresso-brown font-body-md text-body-md bento-radius bento-border py-2 pl-10 pr-4 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors placeholder:text-on-surface-variant/70" placeholder="Search saved recipes..." type="text"/>
+</div>
+</div>
+<!-- Modal Content - Saved Recipes -->
+<div class="px-margin-mobile py-cell-padding overflow-y-auto flex-1">
+<h3 class="font-headline-h2 text-headline-h2 text-espresso-brown mb-gutter">Saved Recipes</h3>
+<div class="space-y-gutter">
+<!-- Recipe Cell 1 -->
+<div class="bg-surface flex items-center justify-between p-cell-padding bento-radius bento-border">
+<div class="flex items-center gap-gutter">
+<div class="w-12 h-12 bento-radius bg-surface-container-highest bg-cover bg-center overflow-hidden" data-alt="A close-up shot of a warm bowl of hearty lentil soup, rich brown and orange hues, garnished with fresh green parsley, set on a rustic wooden table under warm, inviting overhead lighting, crisp bento minimalist aesthetic, natural shadows." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCm0H8vRGAaKqmPrtoS5m10jGD5Vqo81WH-MF3zjJavsN4CKh8a9lEendNkymCIstt0FADc98LHfTF7b-nrGV18CnnVo3VvEB-CLRK3OlXa7Yz76K9gC17nNLz7aIqfmaMv44ug4zsZoaYUAA_DTvDhdtxculkG6peavnA_aU4M_07jhbIxCktTKhkPzoNL01URgbtLP7CTn3tWVXMld_qlPIrUzDbk881Q9XgIzwrKtF_OLn3q3DCb')"></div>
+<div>
+<h4 class="font-body-lg text-body-lg text-espresso-brown font-medium">Lentil Soup</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span>15m</span>
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">local_fire_department</span>320 kcal</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Recipe Cell 2 -->
+<div class="bg-surface flex items-center justify-between p-cell-padding bento-radius bento-border">
+<div class="flex items-center gap-gutter">
+<div class="w-12 h-12 bento-radius bg-surface-container-highest bg-cover bg-center overflow-hidden" data-alt="A fresh, vibrant chickpea salad wrap tightly rolled in a whole wheat tortilla, cross-section showing green lettuce, red peppers, and golden chickpeas, resting on a clean white countertop, natural daylight, crisp minimalist style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCh1OCx97FJaAcZuoa67IVEbmDAOnZODrsZgnn0TEnH67Ufv5qUbOkhejLT2m0LBvL3AB4UosgU8zq-aBFNULfNKabD8PBHeCRwxyuYSHiEFlrQffWyiNeUbAoatcc6bz6DmmKYYiZDpyXlrA1UPdoJQL-8Z9hZLT9U3rQ31R_PUmlpIUtfZXeMPC82u6xdMkGKkYNVimVZ449oqRRRM6wgUu7CPa4w00JEfrvD0FK1JlXz7HsDMDRt')"></div>
+<div>
+<h4 class="font-body-lg text-body-lg text-espresso-brown font-medium">Chickpea Salad Wrap</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span>10m</span>
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">local_fire_department</span>410 kcal</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Recipe Cell 3 -->
+<div class="bg-surface flex items-center justify-between p-cell-padding bento-radius bento-border">
+<div class="flex items-center gap-gutter">
+<div class="w-12 h-12 bento-radius bg-surface-container-highest bg-cover bg-center overflow-hidden" data-alt="A colorful quinoa power bowl filled with roasted sweet potatoes, black beans, avocado slices, and bright green spinach, presented in an earthy ceramic bowl on a light surface, high contrast, clean architectural composition." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDmsW90XI8VORZHnPeFAok8NtY1SlM4p8JT-khr8PS-a4StrMDEYY6vWyoAE0GMfUE_aX4SiAKSkTg6KoP8-vLHVV_gwwvsDjdeozLndAjW0zJy770eFFrheNiuCwXUPS9nm0g_xI_dbyVf0Y4EUdrlFZwkmDEsGgoI813pcoYLbg6fPy2gEGH8sq-vP62yDaQvAC6f6EkXx0IcHBVuJ-3egZ0Og0y-k6zTkB2IApap7WG83hfBTIER')"></div>
+<div>
+<h4 class="font-body-lg text-body-lg text-espresso-brown font-medium">Quinoa Power Bowl</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span>20m</span>
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">local_fire_department</span>480 kcal</span>
+</div>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white hover:bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary-container focus:ring-offset-2">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-margin-mobile border-t border-outline-variant/30 flex justify-center flex-shrink-0 pb-[calc(16px+env(safe-area-inset-bottom))] md:pb-margin-mobile">
+<a class="font-body-md text-body-md text-primary-container font-medium hover:text-primary transition-colors" href="#">View All Saved Recipes</a>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,23 @@
+# Keeps the build context small and secrets/DB out of images (§0).
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/tsconfig.tsbuildinfo
+apps/api/data
+*.db
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+docs
+cookbook ui idea
+Icons8
+archive
+.claude
+**/tests
+**/*.test.*
+Dockerfile*
+docker-compose*.yml
+.dockerignore

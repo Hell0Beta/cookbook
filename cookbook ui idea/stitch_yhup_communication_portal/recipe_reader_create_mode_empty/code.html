@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Recipe</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#351000",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#b2ebff",
+                        "secondary-fixed-dim": "#a4d393",
+                        "surface-variant": "#fedcca",
+                        "outline-variant": "#dec0b4",
+                        "on-background": "#29170d",
+                        "on-primary-container": "#5a2100",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#003845",
+                        "surface-container-lowest": "#ffffff",
+                        "turmeric-yellow": "#EAB308",
+                        "background": "#fff8f5",
+                        "secondary": "#3f6833",
+                        "espresso-brown": "#2D1B10",
+                        "surface": "#fff8f5",
+                        "tertiary-fixed-dim": "#57d6f8",
+                        "on-tertiary-fixed": "#001f27",
+                        "error-container": "#ffdad6",
+                        "primary": "#a14100",
+                        "secondary-container": "#bdedaa",
+                        "inverse-surface": "#402c20",
+                        "primary-container": "#ef7a3c",
+                        "secondary-fixed": "#c0f0ad",
+                        "surface-container": "#ffeadf",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "on-error": "#ffffff",
+                        "on-surface": "#29170d",
+                        "on-tertiary-fixed-variant": "#004e5e",
+                        "primary-fixed-dim": "#ffb693",
+                        "warm-cream": "#FDF8F2",
+                        "on-primary-fixed-variant": "#7a2f00",
+                        "on-secondary-fixed-variant": "#28501e",
+                        "tertiary": "#00677d",
+                        "surface-dim": "#f5d3c1",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#ffe3d4",
+                        "on-secondary-container": "#436d37",
+                        "on-surface-variant": "#574239",
+                        "on-secondary-fixed": "#022100",
+                        "inverse-primary": "#ffb693",
+                        "surface-container-low": "#fff1ea",
+                        "surface-tint": "#a14100",
+                        "tertiary-container": "#00a9ca",
+                        "hatch-placeholder": "#E5E1DB",
+                        "surface-bright": "#fff8f5",
+                        "surface-container-highest": "#fedcca",
+                        "outline": "#8a7267",
+                        "inverse-on-surface": "#ffede5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "grid-base": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "12px",
+                        "cell-padding": "16px",
+                        "margin-desktop": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Work Sans"],
+                        "body-md": ["Work Sans"],
+                        "headline-h2": ["Plus Jakarta Sans"],
+                        "display-h1-mobile": ["Plus Jakarta Sans"],
+                        "label-mono": ["JetBrains Mono"],
+                        "meta-small": ["Work Sans"],
+                        "display-h1": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-h2": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "display-h1-mobile": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "meta-small": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display-h1": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .hatch-pattern {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(45, 27, 16, 0.05) 10px, rgba(45, 27, 16, 0.05) 11px);
+        }
+        .bento-cell {
+            @apply bg-warm-cream border border-espresso-brown/20 rounded-xl p-cell-padding;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant transition-colors duration-200 docked full-width top-0 sticky">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-h2 text-headline-h2 text-primary dark:text-primary-fixed-dim font-bold">Create Recipe</h1>
+<button class="bg-primary-container text-white px-4 py-2 rounded-lg font-meta-small text-meta-small hover:bg-primary transition-colors">
+            Save
+        </button>
+</header>
+<main class="max-w-3xl mx-auto p-margin-mobile space-y-gutter pb-24">
+<!-- Image Block Placeholder -->
+<div class="h-64 w-full bg-hatch-placeholder border border-dashed border-espresso-brown/30 rounded-xl flex items-center justify-center cursor-pointer hover:bg-surface-container transition-colors relative hatch-pattern">
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-full bg-warm-cream border border-espresso-brown/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-espresso-brown">add_a_photo</span>
+</div>
+<span class="font-meta-small text-meta-small text-espresso-brown">Add Cover Image</span>
+</div>
+</div>
+<!-- Title Block -->
+<div class="bento-cell">
+<input class="w-full bg-transparent border-none p-0 focus:ring-0 font-display-h1-mobile text-display-h1-mobile text-espresso-brown placeholder:text-espresso-brown/40" placeholder="Recipe Title" type="text"/>
+</div>
+<!-- Meta Block -->
+<div class="grid grid-cols-2 gap-gutter">
+<div class="bento-cell flex items-center justify-between">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">restaurant</span>
+                    Servings
+                </span>
+<div class="flex items-center space-x-3 bg-surface-container-low rounded-lg p-1 border border-espresso-brown/10">
+<button class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-warm-cream text-espresso-brown"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="font-label-mono text-label-mono w-4 text-center">1</span>
+<button class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-warm-cream text-espresso-brown"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+</div>
+<div class="bento-cell flex items-center justify-between">
+<span class="font-meta-small text-meta-small text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">schedule</span>
+                    Time
+                </span>
+<div class="flex items-center space-x-2">
+<input class="w-12 bg-surface-container-low border border-espresso-brown/10 rounded-lg p-1 text-center font-label-mono text-label-mono focus:ring-1 focus:ring-primary-container" placeholder="0" type="number"/>
+<span class="font-meta-small text-meta-small text-espresso-brown/60">min</span>
+</div>
+</div>
+</div>
+<!-- Import Block -->
+<div class="border border-dashed border-espresso-brown/30 bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">link</span>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-medium text-espresso-brown">Import Recipe</h3>
+<p class="font-meta-small text-meta-small text-on-surface-variant">Paste YouTube link or Import from URL</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<!-- Ingredients Section -->
+<div class="space-y-3">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown px-2">Ingredients</h2>
+<div class="bento-cell space-y-3">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded border border-espresso-brown/20 flex-shrink-0 cursor-pointer hover:bg-surface-container-low"></div>
+<div class="flex-1 flex gap-2">
+<input class="w-16 bg-surface-container-low border border-transparent hover:border-espresso-brown/20 focus:border-primary-container rounded-lg px-2 py-1.5 font-label-mono text-label-mono text-center focus:ring-0" placeholder="1" type="text"/>
+<input class="w-20 bg-surface-container-low border border-transparent hover:border-espresso-brown/20 focus:border-primary-container rounded-lg px-2 py-1.5 font-meta-small text-meta-small text-center focus:ring-0" placeholder="cup" type="text"/>
+<input class="flex-1 bg-surface-container-low border border-transparent hover:border-espresso-brown/20 focus:border-primary-container rounded-lg px-3 py-1.5 font-body-md text-body-md focus:ring-0" placeholder="Ingredient Name" type="text"/>
+</div>
+</div>
+<button class="w-full border border-dashed border-espresso-brown/30 rounded-lg py-2 flex items-center justify-center gap-2 text-espresso-brown hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">add</span>
+<span class="font-meta-small text-meta-small">Add Ingredient</span>
+</button>
+</div>
+</div>
+<!-- Steps Section -->
+<div class="space-y-3">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown px-2">Steps</h2>
+<div class="bento-cell flex gap-3 relative overflow-hidden">
+<div class="w-1 bg-turmeric-yellow absolute left-0 top-0 bottom-0 opacity-50"></div>
+<div class="font-label-mono text-label-mono text-turmeric-yellow mt-1 font-bold">01</div>
+<div class="flex-1">
+<textarea class="w-full bg-surface-container-low border border-transparent hover:border-espresso-brown/20 focus:border-primary-container rounded-lg p-3 font-body-md text-body-md focus:ring-0 resize-none" placeholder="Describe this step..." rows="3"></textarea>
+</div>
+</div>
+<button class="w-full bento-cell border-dashed bg-transparent hover:bg-warm-cream flex items-center justify-center gap-2 text-espresso-brown transition-colors">
+<span class="material-symbols-outlined">add</span>
+<span class="font-meta-small text-meta-small font-medium">Add Step</span>
+</button>
+</div>
+</main>
+</body></html>

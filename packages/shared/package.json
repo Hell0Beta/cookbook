@@ -1,0 +1,31 @@
+{
+  "name": "@cookbook/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsc -p tsconfig.json && node --test tests/scaling.test.js tests/slots.test.js tests/grocery.test.js tests/tagging.test.js tests/youtube.test.js tests/search.test.js tests/recommendations.test.js"
+  },
+  "dependencies": {
+    "convert-units": "^2.3.4",
+    "fraction.js": "^4.3.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/convert-units": "^2.3.12",
+    "typescript": "^5.6.3"
+  }
+}

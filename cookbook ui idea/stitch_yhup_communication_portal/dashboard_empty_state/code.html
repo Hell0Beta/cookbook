@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KitchenScale - Dashboard (Empty State)</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .hatch-placeholder {
+            background: repeating-linear-gradient(
+                45deg,
+                #E5E1DB,
+                #E5E1DB 2px,
+                #FDF8F2 2px,
+                #FDF8F2 8px
+            );
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#28501e",
+                        "surface-container-high": "#ffe3d4",
+                        "primary": "#a14100",
+                        "hatch-placeholder": "#E5E1DB",
+                        "surface-tint": "#a14100",
+                        "tertiary-fixed-dim": "#57d6f8",
+                        "surface-variant": "#fedcca",
+                        "surface-bright": "#fff8f5",
+                        "on-surface-variant": "#574239",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#ef7a3c",
+                        "secondary-fixed-dim": "#a4d393",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#5a2100",
+                        "on-background": "#29170d",
+                        "secondary": "#3f6833",
+                        "background": "#fff8f5",
+                        "tertiary-container": "#00a9ca",
+                        "on-primary-fixed-variant": "#7a2f00",
+                        "surface-container": "#ffeadf",
+                        "surface-dim": "#f5d3c1",
+                        "on-surface": "#29170d",
+                        "secondary-fixed": "#c0f0ad",
+                        "inverse-on-surface": "#ffede5",
+                        "inverse-surface": "#402c20",
+                        "outline-variant": "#dec0b4",
+                        "espresso-brown": "#2D1B10",
+                        "tertiary-fixed": "#b2ebff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001f27",
+                        "inverse-primary": "#ffb693",
+                        "warm-cream": "#FDF8F2",
+                        "outline": "#8a7267",
+                        "on-tertiary-container": "#003845",
+                        "secondary-container": "#bdedaa",
+                        "surface-container-highest": "#fedcca",
+                        "primary-fixed-dim": "#ffb693",
+                        "turmeric-yellow": "#EAB308",
+                        "on-secondary-container": "#436d37",
+                        "surface": "#fff8f5",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#022100",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#351000",
+                        "on-tertiary-fixed-variant": "#004e5e",
+                        "tertiary": "#00677d",
+                        "surface-container-low": "#fff1ea"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "grid-base": "4px",
+                        "margin-mobile": "16px",
+                        "cell-padding": "16px",
+                        "margin-desktop": "24px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "meta-small": ["Work Sans"],
+                        "label-mono": ["JetBrains Mono"],
+                        "headline-h2": ["Plus Jakarta Sans"],
+                        "body-lg": ["Work Sans"],
+                        "display-h1-mobile": ["Plus Jakarta Sans"],
+                        "display-h1": ["Plus Jakarta Sans"],
+                        "body-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "meta-small": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-h2": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-h1-mobile": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "display-h1": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-20 pt-16">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-surface fixed border-b border-outline-variant docked full-width top-0">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-hatch-placeholder border border-espresso-brown/20 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small, stylized profile avatar placeholder image for a modern culinary app, featuring a warm, neutral color palette with subtle espresso brown accents, fitting a crisp, bento minimalist design style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv5dfwsPwAuRWA47xzLNDchG__TX6dSgx0qJsnYsMsr5_N9_dcpLYmzrgzsA8r_uvSQIY7drK-fwVxrc0_7ZuEHtIxkSoWPQseHIkDb0PeLjmOqPsVSjoBJNgeBA1dcHezqWmecNk9jq4T1xD-ta29Fotjh-mU_7JuUUG57g3efqauyDAHSCUdILRLE0PNCz3qzvB_BzWG0JHkjcq24YEC-FUkDBhcrgxRWuoPDNRx9GMIlpJC6P01"/>
+</div>
+<h1 class="font-display-h1-mobile text-display-h1-mobile font-bold text-primary">KitchenScale</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-low transition-colors duration-200">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-margin-mobile max-w-4xl mx-auto flex flex-col gap-gutter">
+<!-- Empty State Hero Bento Cell -->
+<section class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-cell-padding flex flex-col items-center justify-center text-center py-12 gap-4">
+<span class="material-symbols-outlined text-4xl text-outline-variant mb-2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown">No meals planned yet</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[250px]">Let's find your first recipe and get cooking!</p>
+<button class="mt-4 bg-primary-container text-on-primary font-meta-small text-meta-small py-3 px-6 rounded-lg font-bold flex items-center gap-2 hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="search">search</span>
+                Find Recipes
+            </button>
+</section>
+<!-- Weekly Planner Empty State -->
+<section class="flex flex-col gap-2">
+<div class="flex justify-between items-end mb-1">
+<h3 class="font-label-mono text-label-mono text-espresso-brown uppercase tracking-wider">Weekly Planner</h3>
+<span class="font-label-mono text-label-mono text-primary cursor-pointer hover:underline">View Calendar</span>
+</div>
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Today -->
+<div class="bg-surface-container border border-espresso-brown/10 rounded-lg p-3 flex flex-col gap-1">
+<span class="font-meta-small text-meta-small text-on-surface-variant">Today</span>
+<span class="font-body-md text-body-md text-outline italic">Nothing scheduled</span>
+</div>
+<!-- Tomorrow -->
+<div class="bg-surface-container border border-espresso-brown/10 rounded-lg p-3 flex flex-col gap-1">
+<span class="font-meta-small text-meta-small text-on-surface-variant">Tomorrow</span>
+<span class="font-body-md text-body-md text-outline italic">Nothing scheduled</span>
+</div>
+</div>
+</section>
+<!-- Daily Meal Slots Empty State -->
+<section class="flex flex-col gap-2">
+<h3 class="font-label-mono text-label-mono text-espresso-brown uppercase tracking-wider mb-1">Today's Meals</h3>
+<div class="grid grid-cols-3 gap-gutter">
+<!-- Breakfast -->
+<div class="flex flex-col gap-1 items-center">
+<div class="w-full aspect-square hatch-placeholder border border-espresso-brown/20 rounded-lg"></div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase mt-1">Bkfst</span>
+</div>
+<!-- Lunch -->
+<div class="flex flex-col gap-1 items-center">
+<div class="w-full aspect-square hatch-placeholder border border-espresso-brown/20 rounded-lg"></div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase mt-1">Lunch</span>
+</div>
+<!-- Dinner -->
+<div class="flex flex-col gap-1 items-center">
+<div class="w-full aspect-square hatch-placeholder border border-espresso-brown/20 rounded-lg"></div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase mt-1">Dinner</span>
+</div>
+</div>
+</section>
+<!-- Active Grocery List Empty State -->
+<section class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-cell-padding flex flex-col gap-3">
+<div class="flex items-center gap-2 border-b border-espresso-brown/10 pb-2">
+<span class="material-symbols-outlined text-espresso-brown" data-icon="shopping_cart">shopping_cart</span>
+<h3 class="font-headline-h2 text-headline-h2 text-espresso-brown">Active Grocery List</h3>
+</div>
+<div class="py-4 text-center">
+<p class="font-body-md text-body-md text-outline italic">Your list is empty. Add a recipe to get started.</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface border-t border-outline-variant docked full-width bottom-0">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-meta-small text-meta-small mt-1">Home</span>
+</a>
+<!-- Search (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-meta-small text-meta-small mt-1">Search</span>
+</a>
+<!-- Planner (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-meta-small text-meta-small mt-1">Planner</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-95 transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-meta-small text-meta-small mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

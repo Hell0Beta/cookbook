@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KitchenScale - Grilled Lemon Chicken</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Work+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "inverse-primary": "#ffb693",
+                "on-secondary-fixed": "#022100",
+                "on-surface-variant": "#574239",
+                "inverse-on-surface": "#ffede5",
+                "surface-container-high": "#ffe3d4",
+                "surface": "#fff8f5",
+                "secondary": "#3f6833",
+                "secondary-container": "#bdedaa",
+                "on-secondary-container": "#436d37",
+                "primary-fixed": "#ffdbcc",
+                "on-secondary-fixed-variant": "#28501e",
+                "tertiary": "#00677d",
+                "secondary-fixed-dim": "#a4d393",
+                "surface-container-low": "#fff1ea",
+                "tertiary-fixed": "#b2ebff",
+                "error": "#ba1a1a",
+                "surface-tint": "#a14100",
+                "on-tertiary-fixed": "#001f27",
+                "background": "#fff8f5",
+                "surface-container": "#ffeadf",
+                "on-background": "#29170d",
+                "on-tertiary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed-dim": "#57d6f8",
+                "turmeric-yellow": "#EAB308",
+                "surface-variant": "#fedcca",
+                "error-container": "#ffdad6",
+                "espresso-brown": "#2D1B10",
+                "on-surface": "#29170d",
+                "on-tertiary-fixed-variant": "#004e5e",
+                "on-primary-fixed": "#351000",
+                "on-primary-container": "#5a2100",
+                "surface-container-highest": "#fedcca",
+                "on-primary-fixed-variant": "#7a2f00",
+                "secondary-fixed": "#c0f0ad",
+                "surface-dim": "#f5d3c1",
+                "on-error": "#ffffff",
+                "outline-variant": "#dec0b4",
+                "surface-bright": "#fff8f5",
+                "hatch-placeholder": "#E5E1DB",
+                "inverse-surface": "#402c20",
+                "on-primary": "#ffffff",
+                "on-tertiary-container": "#003845",
+                "surface-container-lowest": "#ffffff",
+                "primary": "#a14100",
+                "tertiary-container": "#00a9ca",
+                "primary-container": "#ef7a3c",
+                "on-error-container": "#93000a",
+                "primary-fixed-dim": "#ffb693",
+                "outline": "#8a7267",
+                "warm-cream": "#FDF8F2"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "12px",
+                "cell-padding": "16px",
+                "grid-base": "4px",
+                "margin-mobile": "16px",
+                "margin-desktop": "24px"
+        },
+        "fontFamily": {
+                "display-h1": [
+                        "Plus Jakarta Sans"
+                ],
+                "label-mono": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Work Sans"
+                ],
+                "headline-h2": [
+                        "Plus Jakarta Sans"
+                ],
+                "meta-small": [
+                        "Work Sans"
+                ],
+                "display-h1-mobile": [
+                        "Plus Jakarta Sans"
+                ],
+                "body-md": [
+                        "Work Sans"
+                ]
+        },
+        "fontSize": {
+                "display-h1": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-mono": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-h2": [
+                        "18px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "meta-small": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "display-h1-mobile": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for a cleaner bento look */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dec0b4;
+            border-radius: 4px;
+        }
+        /* Reset for bento flatness */
+        * {
+            box-shadow: none !important;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-warm-cream text-espresso-brown font-body-md min-h-screen flex flex-col relative pb-24">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-warm-cream border-b border-outline-variant fixed top-0 left-0 transition-colors duration-200">
+<button aria-label="Go Back" class="flex items-center justify-center p-2 rounded hover:bg-surface-container-low transition-colors text-espresso-brown">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-h2 text-headline-h2 text-espresso-brown absolute left-1/2 -translate-x-1/2">
+            KitchenScale
+        </h1>
+<div class="flex items-center gap-2">
+<button aria-label="Toggle Edit Mode" class="flex items-center justify-center p-2 rounded border border-[#EF7A3C] hover:bg-[#EF7A3C] hover:text-white transition-colors text-[#EF7A3C] font-label-mono text-label-mono">
+                EDIT
+            </button>
+</div>
+</header><nav class="fixed top-16 left-0 w-full bg-warm-cream border-b border-outline-variant z-40">
+<div class="max-w-3xl mx-auto flex px-margin-mobile">
+<button class="relative py-4 px-4 text-label-mono uppercase font-bold text-espresso-brown border-b-2 border-[#EF7A3C]">
+      Grilled Lemon Chicken
+    </button>
+<button class="relative py-4 px-4 text-label-mono uppercase font-medium text-on-surface-variant hover:text-espresso-brown transition-colors">
+      Roasted Asparagus
+    </button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-mobile max-w-3xl mx-auto w-full flex flex-col gap-grid-base pt-6 pb-margin-mobile mt-32">
+<!-- Recipe Title Block -->
+<div class="px-2 py-4">
+<h1 class="font-display-h1-mobile text-display-h1-mobile text-espresso-brown mb-2">Grilled Lemon Chicken</h1>
+<div class="flex items-center gap-2 text-on-surface-variant font-meta-small text-meta-small">
+<span class="px-2 py-1 border border-outline-variant rounded bg-warm-cream">Manual Entry</span>
+</div>
+</div>
+<!-- Cover Image Block (Bento Cell) -->
+<div class="w-full h-64 border border-outline-variant rounded bg-surface overflow-hidden relative group">
+<div class="bg-cover bg-center w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A beautifully plated, golden-brown grilled lemon chicken breast resting on a pristine white ceramic plate. The chicken is glistening with a light citrus glaze and charred grill marks. Fresh, bright yellow lemon wedges and sprigs of vibrant green rosemary are artfully arranged around the protein. The scene is shot from a top-down perspective on a clean, light-grey concrete kitchen counter. The lighting is bright, natural, and diffused, emphasizing the pragmatic, professional, and crisp light-mode aesthetic of a high-end utilitarian cooking app." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuARGWpH-1MoX9ES7bfuBTzKu5GHuLmUaTq9_oSTk5IkYUjjA0lSANx0IESdHzOuAFoKNhsTzndLGY7JBavsgS_Rx9JHQ1jWzXltPWxEIgSRlOO1pHsLBR1qKCabBxkiQnB4fYAIeYMxeg7ssleEotXBWcGLCA956AZ5TwJOWPxnelwv3Xcam9ht4sVbQOr49nUwWiYizAS9gjsvCMmLwEp921JvzL8-O_lfJVKSaqPmw2fI4xVb6pHL");'></div>
+</div>
+<!-- Meta Block (Bento Cell) -->
+<div class="w-full border border-outline-variant rounded bg-warm-cream p-cell-padding flex flex-row items-center justify-between">
+<div class="flex flex-col gap-1">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">Servings</span>
+<div class="flex items-center gap-3">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded text-espresso-brown hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="remove">remove</span>
+</button>
+<span class="font-headline-h2 text-headline-h2 text-espresso-brown w-4 text-center">4</span>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded text-espresso-brown hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<div class="w-px h-10 bg-outline-variant mx-4"></div>
+<div class="flex flex-col gap-1 flex-1">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">Total Time</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="timer">timer</span>
+<span class="font-headline-h2 text-headline-h2 text-espresso-brown">35 min</span>
+</div>
+</div>
+<div class="w-px h-10 bg-outline-variant mx-4 hidden sm:block"></div>
+<div class="flex-col gap-1 hidden sm:flex">
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">Device Sync</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#EF7A3C]" data-icon="vibration">vibration</span>
+<span class="font-meta-small text-meta-small text-on-surface-variant">Shake to Advance: On</span>
+</div>
+</div>
+</div>
+<!-- Ingredients Section Header -->
+<div class="mt-6 mb-2 px-2 flex justify-between items-end">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown">Ingredients</h2>
+<button class="text-[#EF7A3C] font-meta-small text-meta-small flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]" data-icon="scale">scale</span> Convert to Metric
+            </button>
+</div>
+<!-- Ingredient Blocks Stack -->
+<div class="flex flex-col gap-grid-base">
+<!-- Item 1 -->
+<div class="flex items-center justify-between border border-outline-variant rounded bg-warm-cream p-3 hover:bg-surface-container-low transition-colors group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 border border-outline-variant rounded flex items-center justify-center bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-[14px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<span class="font-body-lg text-body-lg text-espresso-brown">2 <span class="font-bold">chicken breasts</span>, boneless skinless</span>
+</div>
+<div class="px-2 py-1 bg-[#4F7942] rounded text-white font-label-mono text-label-mono">MAIN</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between border border-outline-variant rounded bg-warm-cream p-3 hover:bg-surface-container-low transition-colors group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 border border-outline-variant rounded flex items-center justify-center bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-[14px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<span class="font-body-lg text-body-lg text-espresso-brown">1 <span class="font-bold">lemon</span>, juiced and zested</span>
+</div>
+<div class="px-2 py-1 bg-[#4F7942] rounded text-white font-label-mono text-label-mono">MAIN</div>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center justify-between border border-outline-variant rounded bg-warm-cream p-3 hover:bg-surface-container-low transition-colors group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 border border-outline-variant rounded flex items-center justify-center bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-[14px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<span class="font-body-lg text-body-lg text-espresso-brown">2 tbsp <span class="font-bold">olive oil</span></span>
+</div>
+<div class="px-2 py-1 bg-surface-container-lowest rounded text-on-surface-variant font-label-mono text-label-mono border border-outline-variant border-dashed">SWAP</div>
+</div>
+<!-- Item 4 -->
+<div class="flex items-center justify-between border border-outline-variant rounded bg-warm-cream p-3 hover:bg-surface-container-low transition-colors group cursor-default">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 border border-outline-variant rounded flex items-center justify-center bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+<span class="material-symbols-outlined text-[14px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<span class="font-body-lg text-body-lg text-espresso-brown">1 tsp <span class="font-bold">dried oregano</span></span>
+</div>
+<div class="px-2 py-1 bg-[#4F7942] rounded text-white font-label-mono text-label-mono">MAIN</div>
+</div>
+</div>
+<!-- Steps Section Header -->
+<div class="mt-8 mb-2 px-2">
+<h2 class="font-headline-h2 text-headline-h2 text-espresso-brown">Steps</h2>
+</div>
+<!-- Steps Stack -->
+<div class="flex flex-col gap-grid-base">
+<!-- Step 1 -->
+<div class="flex flex-col border border-outline-variant rounded bg-warm-cream p-4 hover:bg-surface-container-low transition-colors relative">
+<div class="absolute top-4 left-4 w-6 h-6 rounded bg-surface-container-highest border border-outline-variant flex items-center justify-center font-label-mono text-label-mono text-on-surface">1</div>
+<div class="pl-10">
+<p class="font-body-lg text-body-lg text-espresso-brown leading-relaxed">
+                         In a small bowl, whisk together the lemon juice, lemon zest, olive oil, dried oregano, salt, and black pepper to create the marinade.
+                     </p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col border border-outline-variant rounded bg-warm-cream p-4 hover:bg-surface-container-low transition-colors relative">
+<div class="absolute top-4 left-4 w-6 h-6 rounded bg-surface-container-highest border border-outline-variant flex items-center justify-center font-label-mono text-label-mono text-on-surface">2</div>
+<div class="pl-10">
+<p class="font-body-lg text-body-lg text-espresso-brown leading-relaxed">
+                         Place the chicken breasts in a shallow dish or a resealable plastic bag. Pour the marinade over the chicken, ensuring it is evenly coated. Let it marinate in the refrigerator for at least 
+                         <button class="inline-flex items-center gap-1 bg-warm-cream border border-turmeric-yellow text-turmeric-yellow px-2 py-0.5 rounded ml-1 font-label-mono text-label-mono hover:bg-turmeric-yellow hover:text-espresso-brown transition-colors">
+<span class="material-symbols-outlined text-[14px]" data-icon="timer">timer</span> Marinate — 20 min
+                         </button>.
+                     </p>
+</div>
+</div>
+<!-- Step 3 (With Active Timer) -->
+<div class="flex flex-col border-2 rounded bg-surface-bright p-4 relative shadow-sm bg-[#4F7942]">
+<div class="absolute top-4 left-4 w-6 h-6 rounded flex items-center justify-center font-label-mono text-label-mono bg-[#4F7942] text-white">3</div>
+<div class="pl-10">
+<p class="font-body-lg text-body-lg text-espresso-brown leading-relaxed">
+                         Preheat the grill to medium-high heat. Grill the chicken breasts until they are cooked through and have nice grill marks, about 6 minutes per side.
+                     </p>
+<div class="mt-4 flex gap-2">
+<button class="inline-flex items-center gap-2 px-3 py-1.5 rounded font-label-mono text-label-mono transition-colors bg-[#4F7942] text-white">
+<span class="material-symbols-outlined text-[16px]" data-icon="pause">pause</span> Simmer — 12 min
+                         </button>
+<span class="inline-flex items-center font-meta-small text-meta-small animate-pulse text-[#4F7942]">Running...</span>
+</div>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="flex flex-col border border-outline-variant rounded bg-warm-cream p-4 hover:bg-surface-container-low transition-colors relative">
+<div class="absolute top-4 left-4 w-6 h-6 rounded bg-surface-container-highest border border-outline-variant flex items-center justify-center font-label-mono text-label-mono text-on-surface">4</div>
+<div class="pl-10">
+<p class="font-body-lg text-body-lg text-espresso-brown leading-relaxed">
+                         Remove the chicken from the grill and let it rest for 5 minutes before slicing and serving.
+                     </p>
+</div>
+</div>
+</div>
+<!-- Mobile Sync Indicator (Visible on mobile only if needed) -->
+<div class="mt-8 flex items-center justify-center gap-2 sm:hidden text-on-surface-variant font-meta-small text-meta-small">
+<span class="material-symbols-outlined text-[16px] text-[#EF7A3C]" data-icon="vibration">vibration</span> Shake to Advance: On
+        </div>
+</main>
+<!-- Persistent Floating Timer Pill (Collapsed) -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+<button class="bg-warm-cream border border-turmeric-yellow text-espresso-brown rounded-full px-4 py-2 flex items-center gap-3 shadow-md hover:bg-turmeric-yellow transition-colors">
+<span class="material-symbols-outlined text-turmeric-yellow animate-spin-slow" data-icon="hourglass_bottom">hourglass_bottom</span>
+<div class="flex flex-col items-start">
+<span class="font-label-mono text-label-mono uppercase leading-tight">Simmer</span>
+<span class="font-headline-h2 text-headline-h2 leading-tight">10:45</span>
+</div>
+<span class="material-symbols-outlined ml-2 text-on-surface-variant" data-icon="expand_less">expand_less</span>
+</button>
+</div>
+</body></html>

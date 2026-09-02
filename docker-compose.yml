@@ -1,0 +1,54 @@
+# Cookbook — production-ish stack for the Windows test box now, the Linux
+# homeserver later (development.md §0: SQLite + local files, no Redis/S3).
+# Tailscale Serve on the HOST is the only entry point (443 → web, 8443 → api),
+# so ports are published on loopback only.
+#
+# First run: copy apps/api/.env.example → .env.docker and fill in
+# SESSION_SECRET / OPENROUTER_API_KEY; set WEB_ORIGIN to the tailnet URL once
+# Tailscale Serve is up. Rebuild web with NEXT_PUBLIC_API_URL when the public
+# URL is known (it's inlined at build time).
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      # Absolute path inside the container — the schema's file:../data default
+      # resolves against prisma/, a dev-cwd quirk that doesn't apply here.
+      DATABASE_URL: file:/data/cookbook.db
+      DATA_DIR: /data
+      PORT: "3001"
+      # Hostname origins (cookbook.<tailnet>.ts.net) don't match the
+      # private-IP CORS rule — they must be listed explicitly.
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-nvidia/nemotron-3.5-lightning:free}
+      SPOONACULAR_ENABLED: ${SPOONACULAR_ENABLED:-false}
+      SPOONACULAR_API_KEY: ${SPOONACULAR_API_KEY:-}
+    volumes:
+      # SQLite DB + uploaded images — the one thing to back up (§0).
+      - cookbook-data:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Inlined into the Next build — changing it requires a rebuild.
+        # Empty default → api.ts falls back to ${browser-hostname}:3001.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      PORT: "3000"
+    depends_on:
+      - api
+
+volumes:
+  cookbook-data:

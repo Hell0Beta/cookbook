@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KitchenScale - Meal Planner (Empty State)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Work+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#28501e",
+                        "surface-container-high": "#ffe3d4",
+                        "primary": "#a14100",
+                        "hatch-placeholder": "#E5E1DB",
+                        "surface-tint": "#a14100",
+                        "tertiary-fixed-dim": "#57d6f8",
+                        "surface-variant": "#fedcca",
+                        "surface-bright": "#fff8f5",
+                        "on-surface-variant": "#574239",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#ef7a3c",
+                        "secondary-fixed-dim": "#a4d393",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#5a2100",
+                        "on-background": "#29170d",
+                        "secondary": "#3f6833",
+                        "background": "#fff8f5",
+                        "tertiary-container": "#00a9ca",
+                        "on-primary-fixed-variant": "#7a2f00",
+                        "surface-container": "#ffeadf",
+                        "surface-dim": "#f5d3c1",
+                        "on-surface": "#29170d",
+                        "secondary-fixed": "#c0f0ad",
+                        "inverse-on-surface": "#ffede5",
+                        "inverse-surface": "#402c20",
+                        "outline-variant": "#dec0b4",
+                        "espresso-brown": "#2D1B10",
+                        "tertiary-fixed": "#b2ebff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001f27",
+                        "inverse-primary": "#ffb693",
+                        "warm-cream": "#FDF8F2",
+                        "outline": "#8a7267",
+                        "on-tertiary-container": "#003845",
+                        "secondary-container": "#bdedaa",
+                        "surface-container-highest": "#fedcca",
+                        "primary-fixed-dim": "#ffb693",
+                        "turmeric-yellow": "#EAB308",
+                        "on-secondary-container": "#436d37",
+                        "surface": "#fff8f5",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#022100",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#351000",
+                        "on-tertiary-fixed-variant": "#004e5e",
+                        "tertiary": "#00677d",
+                        "surface-container-low": "#fff1ea"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "grid-base": "4px",
+                        "margin-mobile": "16px",
+                        "cell-padding": "16px",
+                        "margin-desktop": "24px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "meta-small": ["Work Sans"],
+                        "label-mono": ["JetBrains Mono"],
+                        "headline-h2": ["Plus Jakarta Sans"],
+                        "body-lg": ["Work Sans"],
+                        "display-h1-mobile": ["Plus Jakarta Sans"],
+                        "display-h1": ["Plus Jakarta Sans"],
+                        "body-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "meta-small": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-mono": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-h2": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-h1-mobile": ["22px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "display-h1": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .hatch-pattern {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(45, 27, 16, 0.05) 5px, rgba(45, 27, 16, 0.05) 10px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 border-b border-outline-variant dark:border-outline-variant flat no shadows flex justify-between items-center px-margin-mobile h-16 w-full z-50 bg-surface dark:bg-surface">
+<div class="flex items-center gap-3">
+<img alt="User profile photo" class="w-8 h-8 rounded-full border border-espresso-brown/20 object-cover" data-alt="A small, stylized profile avatar of a home cook in a modern kitchen setting, warm lighting, flat crisp bento minimalism aesthetic, using a warm cream and espresso brown palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7ePgU6DD8V5Q1ZEFY7RpPNDlo2jVxcjxjiPlWQrQUjaK8M_qpu_3q8UqnyEupLdEUXrqr58kvKFTnoZUYnRyAm2cfg_qCHb1P18hrOl6oFo7AkLOoeheo2CyycHb9PDWXF0FHNId3wE_otFccBwdAosngI9V2166DlFiaHr9_atlRO91KHKBRWWLQmi7LgNXu24g-ec2OsinaKsvE3H1ZjmdfQGBFfOOiotKRlcBL5-hQozYgT-O8"/>
+<h1 class="font-display-h1-mobile text-display-h1-mobile font-bold text-primary dark:text-primary-fixed-dim">KitchenScale</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-DEFAULT text-primary dark:text-primary-fixed-dim hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="max-w-5xl mx-auto px-margin-mobile md:px-margin-desktop py-6">
+<!-- Header Section -->
+<div class="mb-6">
+<h2 class="font-display-h1-mobile md:font-display-h1 text-display-h1-mobile md:text-display-h1 text-on-surface mb-2">Meal Planner</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Organize your week, one cell at a time.</p>
+</div>
+<!-- Weekly Calendar Header (Bento Grid Style) -->
+<div class="grid grid-cols-7 gap-grid-base mb-8">
+<!-- Day Cell 1 (Past) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">MON</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface-variant">16</span>
+</button>
+<!-- Day Cell 2 (Active) -->
+<button class="bg-primary-container border border-espresso-brown rounded-lg p-3 flex flex-col items-center justify-center shadow-[2px_2px_0px_rgba(45,27,16,1)] transition-transform active:translate-y-px active:translate-x-px active:shadow-none">
+<span class="font-label-mono text-label-mono text-on-primary font-bold mb-1">TUE</span>
+<span class="font-headline-h2 text-headline-h2 text-on-primary font-bold">17</span>
+</button>
+<!-- Day Cell 3 (Future) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">WED</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface">18</span>
+</button>
+<!-- Day Cell 4 (Future) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">THU</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface">19</span>
+</button>
+<!-- Day Cell 5 (Future) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">FRI</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface">20</span>
+</button>
+<!-- Day Cell 6 (Future) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">SAT</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface">21</span>
+</button>
+<!-- Day Cell 7 (Future) -->
+<button class="bg-warm-cream border border-espresso-brown/20 rounded-lg p-3 flex flex-col items-center justify-center hover:bg-surface-container-low transition-colors duration-200">
+<span class="font-label-mono text-label-mono text-on-surface-variant mb-1">SUN</span>
+<span class="font-headline-h2 text-headline-h2 text-on-surface">22</span>
+</button>
+</div>
+<!-- Selected Day Section -->
+<div class="mb-6 flex items-center justify-between border-b border-espresso-brown/10 pb-4">
+<h3 class="font-headline-h2 text-headline-h2 text-on-surface">Tuesday, Oct 17</h3>
+<span class="font-label-mono text-label-mono text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded">0 MEALS PLANNED</span>
+</div>
+<!-- Empty State Bento Cell -->
+<div class="bg-warm-cream border border-espresso-brown/20 rounded-xl p-8 mb-6 flex flex-col items-center justify-center text-center min-h-[300px]">
+<div class="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-6 border border-espresso-brown/10">
+<span class="material-symbols-outlined text-4xl text-primary" data-icon="restaurant" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<h4 class="font-headline-h2 text-headline-h2 text-on-surface mb-2">Your day is looking a bit empty.</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 max-w-sm">Plan a meal or find a new favorite recipe to fill your bento grid.</p>
+<button class="bg-primary-container text-on-primary font-meta-small text-meta-small px-6 py-3 rounded-lg border border-espresso-brown shadow-[2px_2px_0px_rgba(45,27,16,1)] hover:bg-primary-fixed-variant transition-all active:translate-y-px active:translate-x-px active:shadow-none flex items-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+                Add a Recipe
+            </button>
+</div>
+<!-- Secondary Action Dotted Cell -->
+<button class="w-full bg-transparent hatch-pattern border border-dashed border-espresso-brown/40 rounded-xl p-4 flex flex-col items-center justify-center hover:bg-espresso-brown/5 transition-colors duration-200 min-h-[120px]">
+<span class="material-symbols-outlined text-on-surface-variant mb-2" data-icon="add_circle">add_circle</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant tracking-widest">ADD LUNCH</span>
+</button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface dark:bg-surface border-t border-outline-variant dark:border-outline-variant md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-meta-small text-meta-small">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="search">search</span>
+<span class="font-meta-small text-meta-small">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-accent dark:text-accent font-bold hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_today" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-meta-small text-meta-small">Planner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim active:scale-95 transition-all duration-150 w-16 h-14" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-meta-small text-meta-small">Profile</span>
+</a>
+</nav>
+</body></html>

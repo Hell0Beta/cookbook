@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# env & secrets
+.env
+.env.local
+.env.*.local
+
+# databases & data
+*.db
+*.db-journal
+*.sqlite
+data/
+
+# logs & misc
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# claude local settings (keep project settings, ignore machine-local)
+.claude/settings.local.json
+$PROFILE.txt
+
+archive/**
+archive/Food Images/Food Images/-bloody-mary-tomato-toast-with-celery-and-horseradish-56389813.jpg
