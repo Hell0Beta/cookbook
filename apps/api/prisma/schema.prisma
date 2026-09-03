@@ -24,6 +24,7 @@ model User {
   favorites      Favorite[]
   cookedEvents   CookedEvent[]
   discoverSuggestions DiscoverSuggestion[]
+  cookingSessions CookingSession[]
 }
 
 model DietProfile {
@@ -62,6 +63,7 @@ model Recipe {
   mealPlanEntries    MealPlanEntry[]
   favorites          Favorite[]
   cookedEvents       CookedEvent[]
+  cookingSessions    CookingSession[]
   // Recipe → grocery traceability goes through GroceryListItem.sourceRecipeIds
   // (JSON array), not a FK relation — no back-relation needed.
 }
@@ -223,4 +225,39 @@ model DiscoverSuggestion {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, generatedAt])
+}
+
+// Voice assistant — one conversation per (user, meal occasion) per day-ish
+// window (development.md §3 "CookingSession", §14.4). Reopening the reader
+// resumes today's session so past context reloads cheaply.
+model CookingSession {
+  id           String    @id @default(cuid())
+  userId       String
+  recipeId     String
+  occasionKey  String? // the Reader's occasion identity (?date=&slot= / ?upcoming=1)
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  lastSeenAt   DateTime  @default(now())
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe   Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId, lastSeenAt])
+}
+
+// Voice assistant transcript (development.md §3 "ChatMessage", §14.4). Text
+// only — transcribed speech is stored as its transcript, audio is never
+// persisted. intent records which router branch produced the reply.
+model ChatMessage {
+  id                String   @id @default(cuid())
+  cookingSessionId  String
+  role              String // user | assistant
+  content           String
+  intent            String? // step_control|ingredient_lookup|timer|llm|llm_fallback|quota_notice
+  createdAt         DateTime @default(now())
+
+  session CookingSession @relation(fields: [cookingSessionId], references: [id], onDelete: Cascade)
+
+  @@index([cookingSessionId, createdAt])
 }

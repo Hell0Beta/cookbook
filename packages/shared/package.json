@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsc -p tsconfig.json && node --test tests/scaling.test.js tests/slots.test.js tests/grocery.test.js tests/tagging.test.js tests/youtube.test.js tests/search.test.js tests/recommendations.test.js"
+    "test": "tsc -p tsconfig.json && node --test tests/scaling.test.js tests/slots.test.js tests/grocery.test.js tests/tagging.test.js tests/youtube.test.js tests/search.test.js tests/recommendations.test.js tests/chat.test.js"
   },
   "dependencies": {
     "convert-units": "^2.3.4",

@@ -1,6 +1,6 @@
 // Typed API client — all requests carry the session cookie (username-only auth,
 // development.md §0). Errors normalize to the { error, message? } convention (§11).
-import type { ApiError, DietProfileOut, DiscoverResponse, ImportSearchResult, IngredientOption, InternalRecommendationsResponse, MealPlanEntryOut, QuickAddInput, RecipeBlocks, RecipeSearchResult, TagNode, YoutubeExtractionDraft } from "@cookbook/shared";
+import type { ApiError, ChatLlmTurnResponse, ChatLogInput, ChatMessage, ChatMessageInput, ChatSessionResponse, CreateChatSessionInput, DietProfileOut, DiscoverResponse, ImportSearchResult, IngredientOption, InternalRecommendationsResponse, MealPlanEntryOut, QuickAddInput, RecipeBlocks, RecipeSearchResult, TagNode, YoutubeExtractionDraft } from "@cookbook/shared";
 
 // API base URL. Default follows the browser's hostname so localhost and LAN
 // (phone) browsing both work — the session cookie is host-scoped, so a
@@ -213,6 +213,24 @@ export const api = {
   // Tier 2 "Discover" suggestions from the local dataset (development.md §10,
   // §11). No LLM call anymore — can never quota-fail.
   getDiscover: () => request<DiscoverResponse>("/recommendations/discover"),
+
+  // Voice assistant chat sessions (development.md §14, §11 — Phase 11).
+  createChatSession: (body: CreateChatSessionInput) =>
+    request<ChatSessionResponse>("/chat/sessions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getChatSession: (id: string) => request<ChatSessionResponse>(`/chat/sessions/${id}`),
+  sendChatMessage: (id: string, body: ChatMessageInput) =>
+    request<ChatLlmTurnResponse>(`/chat/sessions/${id}/messages`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  logChatTurn: (id: string, body: ChatLogInput) =>
+    request<ChatMessage>(`/chat/sessions/${id}/log`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 // GET /recipes list item (lighter than the full block stack).

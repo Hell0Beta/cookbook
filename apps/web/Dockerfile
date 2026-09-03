@@ -30,7 +30,13 @@ COPY apps/web apps/web
 # Empty default → api.ts falls back to `${browser-hostname}:3001`.
 ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Vendor the local STT model (whisper tiny.en q8, ~41 MB) — development.md
+# §14.1: model artifacts are fetched at BUILD time only, never at runtime.
+# Build-time network is the same category as the lockfile install (§0). The
+# script is idempotent: a public/models/ copied in from the build context is
+# kept as-is, so local builds with a warm models dir don't re-download.
 RUN pnpm --filter @cookbook/shared build \
+  && pnpm --filter @cookbook/web vendor:stt \
   && pnpm --filter @cookbook/web build
 
 FROM node:22-bookworm-slim AS runtime

@@ -22,6 +22,11 @@ logs/
 .DS_Store
 Thumbs.db
 
+# STT model artifacts (whisper ~41 MB) — vendored at build time by
+# `pnpm --filter @cookbook/web vendor:stt` / the web Dockerfile, never committed
+# (owner decision, 2026-09-03).
+apps/web/public/models/
+
 # claude local settings (keep project settings, ignore machine-local)
 .claude/settings.local.json
 $PROFILE.txt
