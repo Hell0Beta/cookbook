@@ -15,6 +15,7 @@ Everything in `apps/web/` — the entire user-facing surface of the app. You bui
   - §0 Deployment Constraints — **binding: self-hosted, offline-first runtime.** No CDN fonts/scripts, no telemetry; everything bundled.
   - §2 Recommended Libraries (your toolkit — shadcn/ui, BlockNote, dnd-kit, TanStack Query, Zustand, Framer Motion, sonner, lucide-react)
   - §7 "Recipe Reader/Editor, Quick Add, Timer & Shake Gesture" (implementation approach for your hardest components)
+  - §14 "Voice Cooking Assistant" (your STT/TTS client architecture, the intent router you execute, session persistence you render)
   - §11 API Surface (every endpoint you'll consume, including the `llm_quota_exceeded` error convention for AI-dependent endpoints)
   - §13 Open Questions (responsive web PWA resolved per §0)
 - `cookbook ui idea/stitch_yhup_communication_portal/` — Stitch HTML mockups for dashboard, search results, meal planner (+ empty states), recipe reader (create mode, multi-dish tabs), add-lunch modal.
@@ -31,6 +32,7 @@ Everything in `apps/web/` — the entire user-facing surface of the app. You bui
 - Servings stepper with live scaling display (design.md §4.4) — the math comes from the backend (`GET /recipes/:id/scale`) or `packages/shared` scaling helpers owned by integrations; you render it.
 - Quick Add modal (design.md §3.4, development.md §7.2) — same component parameterized by `recipe_id`, triggered from Recipe Reader and Search result cells.
 - **AI quota alert UI** (design.md §5, development.md §0/§11): when an endpoint returns `llm_quota_exceeded` (or `quota_exhausted: true`), show the dismissible "daily AI requests used up" banner and grey out only AI-dependent entry points (YouTube import, Discover). All other features keep working; never a blocking error screen.
+- **Voice assistant surface** (design.md §3.3.4, development.md §14 — phase 11): the collapsible chat panel, push-to-talk capture, the Web Worker STT pipeline (transformers.js + vendored whisper model — local model paths only, remote fetching disabled), SpeechSynthesis TTS with tap-to-cancel, spoken timer completions, and *execution* of intent-router actions (step advance, timer store commands) against your Zustand stores. The router itself is a shared pure function; the LLM turn is a backend route — you run the router client-side and either execute locally (rule-based) or POST the LLM turn.
 
 ## Explicitly NOT your job
 

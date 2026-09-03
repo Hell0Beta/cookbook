@@ -13,6 +13,7 @@ Everything in `apps/api/` — the REST API, database schema, auth, job queue wir
   - §3 Data Model — **every entity and field name is contractual.** `MealPlanEntry.is_upcoming_pin`, `RecipeIngredient.role_tag`, `source_type` enum, `MealPlanEntry.scheduled_at` nullability, multi-dish semantics (no "Meal" grouping entity).
   - §7 "Quick Add to Meal (Modal)" — the three quick-add modes and slot resolution logic
   - §8 "Serving Scaling & Grocery List Aggregation" — persistence side (`GroceryList`/`GroceryListItem` rows, `source_recipe_ids` traceability)
+  - §14 "Voice Cooking Assistant" — the `/chat/*` routes you own (session resolve/resume, LLM message turn, client-resolved-turn logging) and the `CookingSession`/`ChatMessage` entities
   - §11 API Surface — the full REST contract (representative; adjust names only if you update this doc)
   - §12 Build Phases — sequencing
 - `docs/design.md` — skim §3.4 (Quick Add modal behavior), §3.5 (what the planner's three panels each query), §4.1 (multi-recipe occurrence semantics). You need enough UI context to shape the endpoints, not to build UI.
@@ -33,6 +34,7 @@ Everything in `apps/api/` — the REST API, database schema, auth, job queue wir
 - Job queue: **in-process** (`p-queue` or a plain promise-queue module — no Redis/BullMQ per §0) for async work: YouTube extraction, AI tagging on bulk/import, recommendation refresh. You own the queue infrastructure; the job payloads' logic belongs to the owning agent. Persist job state to SQLite if durability is needed.
 - **Image storage: local data directory** (e.g. `/data/images` or a configurable path) served through a static route — no S3.
 - In-process LRU/Map cache with TTL for external API responses (§0) — no Redis.
+- **Voice assistant routes (§14, phase 11):** `POST /chat/sessions` (resume-today-or-create by occasion), `GET /chat/sessions/:id`, `POST /chat/sessions/:id/messages` (persist user message → ai-pipeline's chat completion → persist reply; **429 `llm_quota_exceeded` only after the user message is persisted**), `POST /chat/sessions/:id/log` (fire-and-forget persistence of client-resolved turns — never triggers an LLM call). Plus the `CookingSession`/`ChatMessage` Prisma entities, field names per §3.
 
 ## Explicitly NOT your job
 

@@ -98,6 +98,34 @@ Because a single dashboard "Upcoming Recipe" or planned meal can represent **mul
 - While the Recipe Reader is open in read mode (cooking mode), a **single shake gesture** advances to the next `Step` block, scrolling it into focus and starting its timer automatically if it has a duration. This is aimed at hands-messy cooking use — no need to touch the screen to progress.
 - Should be toggleable (some users cook near counters where accidental shakes could happen) — expose an on/off affordance within the reader (e.g., small "shake to advance: on" indicator, tappable).
 
+#### 3.3.4 Voice Assistant Panel
+A collapsible conversational panel scoped to the Recipe Reader in **read (cooking) mode** — the hands-free companion to the Timer Tool and Shake-to-Advance. Speech is the primary input; a text field is always present as the equal fallback. **Fully local speech**: transcription runs on-device (development.md §14), TTS is the browser's speech synthesis — no speech audio ever leaves the device.
+
+**Collapsed state — floating mic button:**
+- A circular floating button docked bottom-right, above the floating timer pill (§3.3.2) when both are visible — visually siblings, same elevation treatment, distinct accent color.
+- Shows mic icon; when a timer is running behind it, no badge (timer state belongs to the timer pill).
+- Tap → expands the panel. Long-press (or a settings affordance in the expanded panel) → starts capture immediately without expanding (power-user shortcut).
+
+**Expanded state — pop-out panel:**
+- Bottom sheet over the reader content, ~40–60% viewport height, same bento card treatment (1px border, app radius, page-colored surface). Reader content stays visible above it.
+- Collapse affordance (chevron/grab-handle) returns to the collapsed mic button; the conversation is not lost — collapsing preserves state, expanding restores it. Transcript and audio state persist for the whole cooking session.
+- Structure top-to-bottom:
+  - **Session header:** recipe title + current step indicator ("Step 3 of 7"), live timer chips (synced with §3.3.2 state), collapse control.
+  - **Transcript:** scrolling multiturn thread — user messages (right-aligned, show transcribed speech; a small "editing" affordance on the just-transcribed text so a mis-transcription can be corrected before sending), assistant replies (left-aligned). Deterministic/rule-based answers (step reads, timer confirmations — development.md §14) render with a subtle icon distinguishing them from LLM answers; they are spoken aloud like any other reply.
+  - **Status line:** compact state indicator — listening (animated waveform), transcribing (spinner + partial transcript), thinking (dots), speaking (soundwave + "tap mic to interrupt"), quota-limited mode indicator.
+- **Push-to-talk:** tap-and-hold the mic button (or tap once to arm, tap again to stop). Release ends the capture window and transcription begins. This is the primary hands-free path; the text field is the always-available fallback.
+- **Interruption (v1):** while the assistant is speaking, tapping the mic cancels TTS playback immediately and arms the mic. No continuous listening during playback.
+- **Hands-free window (optional post-v1):** after each spoken reply, mic stays hot for a configurable few seconds before sleeping, so a quick follow-up needs no tap. Toggleable, default off.
+
+**Spoken behavior:**
+- Replies are spoken aloud via on-device TTS as well as shown in the transcript. Timer completions are *spoken* in addition to the §3.3.2 pulse/vibration/sound ("Your 12-minute simmer is done — next step is adding the pasta.") when the panel is open (or the voice feature enabled).
+- Timer completion speech works with the panel closed too, as long as the assistant was used at least once this session (mic permission granted) — power users get audible alerts without keeping a chat window on screen. Toggleable.
+
+**Session lifetime & persistence (development.md §3 "CookingSession", §14):**
+- One cooking session = one conversation, scoped to the meal occasion (the same occasion that drives multi-recipe tabs, §3.3.1). Switching tabs within the occasion keeps one transcript; opening a different recipe/meal starts a new session.
+- Sessions persist server-side. Reopening the reader (same occasion, later that day or tomorrow) reloads the transcript and offers "Continue conversation" / "Start fresh" — past context feeds LLM context assembly (development.md §14).
+- User speech is stored as *text* only (the transcript), never as audio.
+
 ### 3.4 Quick Add to Meal (Modal)
 Triggered from two places: (a) the **Recipe Reader**, and (b) each **Recipe List Item** in Search results — a small "add to meal" icon/button on the cell.
 
@@ -155,3 +183,4 @@ User enters ingredients they have → results ranked by % of a recipe's *main* i
 - Grocery list empty state: "Select recipes to build your list."
 - Meal Planner empty day: left sidebar shows "Nothing planned yet — drag a recipe here or use Quick Add."
 - **AI quota alert:** the LLM runs on a free tier with daily request limits (development.md §0). When exhausted, show a dismissible banner/toast — "Daily AI requests used up — YouTube import and Discover are unavailable until tomorrow." — and disable only the AI-dependent entry points (grey them out with the same message on tap). Everything else in the app keeps working normally; this is never a blocking error screen.
+- **Voice assistant under quota exhaustion:** the panel itself stays fully usable — recipe-bound intents (step reads, ingredient lookups, timer control) are rule-based and keep working, and TTS is local. When an LLM answer is requested and quota is exhausted, the assistant speaks and shows "Daily AI requests used up — I can still read steps, check ingredients, and set timers." The panel header shows a compact quota-limited indicator (same mono label style as other meta text) while in this state. Free-form/general questions return a spoken "I can't answer that until tomorrow" — never silence.

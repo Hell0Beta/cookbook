@@ -11,6 +11,7 @@ The intelligence layer: the Tagging Engine, the YouTube extraction pipeline, and
   - §5 YouTube Recipe Extraction (the full flow, the structured-extraction prompt, edge cases incl. quota-exceeded)
   - §6 Tagging Engine (all five responsibilities, rule-based-first approach, idempotency)
   - §10 Recommendation Engine (Tier 1 deterministic internal; Tier 2 LLM-generated "Discover" — no web search on this model)
+  - §14 "Voice Cooking Assistant" — the chat-completion prompt assembly + context budget (§14.3) you own; the intent router is a shared pure function (§14.2) whose logic is also yours
   - §3 Data Model — the fields you populate: `RecipeIngredient.role_tag`, `swap_suggestions`, `Recipe.diet_tags`, `Tag`/`RecipeTag`, `Ingredient.category`, `Recipe.source_type`
   - §9 Ingredient-Based Search — you feed it `role_tag` correctness; the scoring spec uses main vs swap weighting
   - §1 Suggested Stack (OpenRouter client, in-process queue, DB-persisted results — no Redis)
@@ -38,6 +39,10 @@ The intelligence layer: the Tagging Engine, the YouTube extraction pipeline, and
 **Recommendations — development.md §10:**
 - Tier 1 (deterministic): filter library by `DietProfile` (diet_types, allergies, excluded_ingredients, preferred_cuisines); rank by recency of similar cooked recipes, pantry ingredient overlap, cuisine match. Powers Dashboard's "Upcoming Recipe".
 - Tier 2 (LLM-generated "Discover"): job sends `DietProfile` + recent-cooked summary; the model generates ideas from its own knowledge (no web search on this model) → `{title, summary, why_recommended}` — **no `source_url`** (don't trust a small model to cite real URLs), short summaries only, never reproduced copyrighted recipe text. Persist in the DB with ~24h refresh cadence; skip entirely when the daily quota is exhausted (serve stale/empty results with a quota flag rather than erroring).
+
+**Voice assistant intelligence — development.md §14 (phase 11):**
+- `routeCookingIntent(text, context)` — the intent router as a pure function in `packages/shared` (§14.2): step control, ingredient lookup, timer control resolved without the LLM; everything else falls through to the LLM turn. Fail-soft — the router saves quota, it never gatekeeps.
+- Chat-completion prompt assembly (§14.3) hosted in a service the backend's `/chat` routes call: context = recipe title + servings, current step ± neighbors, ingredients at current scale, timer summary, last ~8 persisted session turns. Short replies (≤ 2 sentences, `maxTokens` ≈ 200), `reasoning` off. Reuses the existing OpenRouter client — plain completion, no streaming (§0).
 
 ## Explicitly NOT your job
 
