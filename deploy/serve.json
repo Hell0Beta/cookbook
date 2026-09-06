@@ -1,0 +1,24 @@
+{
+  "TCP": {
+    "80": { "HTTP": true },
+    "443": { "HTTPS": true },
+    "8443": { "HTTPS": true }
+  },
+  "Web": {
+    "cookbook.dog-taipan.ts.net:80": {
+      "Handlers": {
+        "/": { "Redirect": "https://cookbook.dog-taipan.ts.net" }
+      }
+    },
+    "cookbook.dog-taipan.ts.net:443": {
+      "Handlers": {
+        "/": { "Proxy": "http://127.0.0.1:3000" }
+      }
+    },
+    "cookbook.dog-taipan.ts.net:8443": {
+      "Handlers": {
+        "/": { "Proxy": "http://127.0.0.1:3001" }
+      }
+    }
+  }
+}
