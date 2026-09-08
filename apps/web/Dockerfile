@@ -16,6 +16,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+# scripts/ rides along: @cookbook/web's postinstall runs vendor:tts (Kokoro)
+# during install — without this the hook fires with the script absent and
+# fails the install.
+COPY apps/web/scripts apps/web/scripts/
 # shared is a filter root too: as a mere dependency only its PROD deps are
 # installed, but its build script needs its devDep `typescript`.
 RUN pnpm install --frozen-lockfile --filter @cookbook/web --filter @cookbook/shared
@@ -30,13 +34,15 @@ COPY apps/web apps/web
 # Empty default → api.ts falls back to `${browser-hostname}:3001`.
 ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-# Vendor the local STT model (whisper tiny.en q8, ~41 MB) — development.md
-# §14.1: model artifacts are fetched at BUILD time only, never at runtime.
-# Build-time network is the same category as the lockfile install (§0). The
-# script is idempotent: a public/models/ copied in from the build context is
-# kept as-is, so local builds with a warm models dir don't re-download.
+# Vendor the local speech models (whisper tiny.en q8 ~41 MB, Kokoro-82M q8
+# ~93 MB + voices) — development.md §14.1: model artifacts are fetched at
+# BUILD time only, never at runtime. Build-time network is the same category
+# as the lockfile install (§0). Both scripts are idempotent: a public/models/
+# copied in from the build context (or populated by the deps stage's
+# postinstall) is kept as-is, so local builds with a warm models dir don't
+# re-download.
 RUN pnpm --filter @cookbook/shared build \
-  && pnpm --filter @cookbook/web vendor:stt \
+  && pnpm --filter @cookbook/web vendor:models \
   && pnpm --filter @cookbook/web build
 
 FROM node:22-bookworm-slim AS runtime

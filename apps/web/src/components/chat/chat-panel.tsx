@@ -8,7 +8,7 @@
 // the editable input for correction before sending; replies are spoken via
 // on-device TTS. Rule-based intents resolve client-side (§14.2) — only free
 // questions cost an LLM turn.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ChefHat,
@@ -35,7 +35,7 @@ import {
   type StepBlock,
 } from "@cookbook/shared";
 import { api, ApiRequestError } from "@/lib/api";
-import { cancelSpeech, setSpeechEnabled, speak } from "@/lib/tts";
+import { cancelSpeech, preloadTts, setSpeechEnabled, speak } from "@/lib/tts";
 import { setActiveChatSession } from "@/components/chat/chat-session-registry";
 import { useStt } from "@/components/chat/use-stt";
 import { formatClock, useTimerStore } from "@/components/timer/timer-store";
@@ -85,8 +85,13 @@ export function ChatPanel({
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight });
   }, [messages, thinking]);
 
-  const timers = useTimerStore((s) =>
-    s.timers.filter((t) => t.recipeId === recipeId && !t.completed),
+  // Select the stable store array, then filter in useMemo — a .filter inside
+  // the selector returns a fresh reference per snapshot and React flags that
+  // as an uncached getSnapshot (infinite re-render).
+  const allTimers = useTimerStore((s) => s.timers);
+  const timers = useMemo(
+    () => allTimers.filter((t) => t.recipeId === recipeId && !t.completed),
+    [allTimers, recipeId],
   );
 
   // ── session lifecycle ──────────────────────────────────────────────────────
@@ -112,9 +117,12 @@ export function ChatPanel({
     }
   };
 
-  // Opening the panel resolves today's session (resume-today-or-create, §14.4).
+  // Opening the panel resolves today's session (resume-today-or-create, §14.4)
+  // and warms the TTS model so the first spoken reply uses Kokoro, not the
+  // fallback (development.md §14.1).
   useEffect(() => {
     if (open && !session && !creating) void openSession();
+    if (open) preloadTts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, session]);
 

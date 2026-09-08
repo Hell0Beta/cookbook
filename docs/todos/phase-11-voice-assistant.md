@@ -23,6 +23,7 @@ From development.md §12, Build Phase 11. Implements the cooking-session voice a
 
 ## TTS + proactive speech (development.md §14.1 TTS)
 - [x] SpeechSynthesis wrapper (`lib/tts.ts`): speak replies, default-voice selection, cancel-on-new, speaker mute toggle; every browser-API branch try/catch *(frontend)*
+- [x] **TTS engine upgrade: Kokoro-82M primary (owner request, 2026-09-08)** — `tts-worker.ts` runs kokoro-js (q8 ONNX ~92 MB, `af_heart` default, 5 voices) in a worker; `vendor:tts` + `postinstall` vendor model + voices into `public/models/Kokoro-82M-v1.0-ONNX/` (kokoro-js's hardcoded HF voice URL intercepted via the `"kokoro-voices"` Cache API priming — §0 stays clean); SpeechSynthesis is the fallback while loading / on failure *(frontend)*
 - [x] Spoken timer completions when the assistant is active this session ("Your 12-minute timer is done — step N…"), in addition to §3.3.2 pulse/vibration *(frontend — `ProactiveTimerSpeech` at app root)*
 - [x] Proactive notices logged as `ChatMessage` rows (intent `timer`) so transcript matches what was spoken *(frontend → `/chat/sessions/:id/log`)*
 - [x] App-root watcher (`providers.tsx`) — spoken alerts keep firing while navigating away from the reader; the panel registers its session in a module-level registry *(frontend)*
@@ -52,4 +53,5 @@ From development.md §12, Build Phase 11. Implements the cooking-session voice a
 
 ## Verification log
 - 2026-09-03: shared 85/85 tests (incl. 22 chat tests); api + web typecheck clean; web production build compiles + emits the STT worker chunk (standalone-output symlink failures on Windows are pre-existing — real packaging happens in the Linux Docker build); whisper tiny.en q8 vendored (10 MB encoder + 31 MB merged decoder from `onnx-community/whisper-tiny.en`, `_quantized` naming); live API smoke: session create / rule-turn log / graceful LLM-unavailable with persisted user message / same-occasion resume.
+- 2026-09-08: Kokoro TTS integrated — model + 5 voices vendored (~93 MB, `Kokoro-82M-v1.0-ONNX`, q8 `_quantized` naming like whisper), typecheck clean, production build compiles + emits the ~1.3 MB TTS worker chunk (kokoro-js + embedded espeak-ng asm.js phonemizer), `postinstall` hook verified idempotent, Dockerfile deps stage carries `scripts/` so the hook can run and the build stage vendors all models (`vendor:models`). **Still open: browser smoke of Kokoro playback + first-load latency on the target phone.**
 - **Still open:** on-device latency + transcription quality measurement (needs a real phone + mic); a live LLM turn (needs OPENROUTER_API_KEY in `apps/api/.env`); browser smoke of the panel/mic/TTS.

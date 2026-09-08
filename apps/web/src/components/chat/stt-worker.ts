@@ -71,9 +71,8 @@ self.onmessage = async (e: MessageEvent) => {
       postMessage({ type: "status", stage: "transcribing" });
       const audio = msg.audio!;
       const output = await transcriber!(audio, {
-        // English-only model: skip language detection; keep outputs terse.
-        language: "en",
-        task: "transcribe",
+        // English-only model ("*.en"): transformers.js rejects `language`/
+        // `task` for non-multilingual models — defaults are already correct.
       });
       const text = (Array.isArray(output) ? output[0]?.text : output?.text) ?? "";
       postMessage({ type: "result", text: text.trim() });

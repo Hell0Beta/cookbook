@@ -27,6 +27,7 @@ const MODEL_FILES = [
   "config.json",
   "generation_config.json",
   "tokenizer.json",
+  "tokenizer_config.json", // transformers.js requests this when building the tokenizer
   "preprocessor_config.json",
   "onnx/encoder_model_quantized.onnx", // q8 encoder
   "onnx/decoder_model_merged_quantized.onnx", // q8 merged decoder (with past)
