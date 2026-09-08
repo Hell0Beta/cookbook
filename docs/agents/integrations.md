@@ -11,6 +11,7 @@ The outside-world plumbing and the numeric core: the public recipe API import pi
   - §4 Ingesting Recipes from a Public API (TheMealDB primary path, Spoonacular optional, the 5-step normalization pipeline)
   - §8 "Serving Scaling & Grocery List Aggregation" (scaling formula, unit-family conversion, fraction rounding, non-summed lines)
   - §9 Ingredient-Based Search (the inverted index you help maintain; match-score weighting)
+  - §14 "Voice Cooking Assistant" — §14.2's ingredient-lookup intent answers through your existing scaling helpers; you own nothing new there, but keep those exports stable for the router's consumption
   - §3 Data Model — `Ingredient` (canonical_name, category, default_unit, nutrition_ref), `RecipeIngredient` (raw_text, quantity, unit enum, sort_order), `GroceryListItem` (aggregated_quantity, unit, category, source_recipe_ids)
   - §2 Recommended Libraries (parse-ingredient, convert-units, fraction.js — picked specifically for your features)
   - §13 Open Questions (Spoonacular vs Edamam vs TheMealDB is explicitly yours to resolve)

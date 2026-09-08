@@ -44,6 +44,7 @@ import {
 } from "@/components/blocks/block-views";
 import { CoverPickerModal, RecipeCover } from "@/components/cover-picker";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { ChatPanel } from "@/components/chat/chat-panel";
 import { useTimerStore } from "@/components/timer/timer-store";
 import { requestMotionPermission, useShakeToAdvance } from "@/components/timer/use-shake-to-advance";
 
@@ -53,9 +54,11 @@ const newBlockId = () => `local-${Date.now()}-${blockIdCounter++}`;
 export function RecipeEditor({
   initial,
   recipeId,
+  occasionKey,
 }: {
   initial: RecipeBlocks;
   recipeId?: string; // absent → create mode
+  occasionKey?: string | null; // meal-occasion identity for the chat session (§14.4)
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -465,6 +468,21 @@ export function RecipeEditor({
             queryClient.invalidateQueries({ queryKey: ["recipes"] });
             router.push("/recipes");
           }}
+        />
+      )}
+
+      {/* Voice assistant panel — read (cooking) mode only (design.md §3.3.4,
+          development.md §14). One transcript per occasion; context (current
+          step, timers, servings) is reported from this editor's state. */}
+      {recipeId && !editable && (
+        <ChatPanel
+          recipeId={recipeId}
+          recipeTitle={title}
+          steps={numbered.filter((b): b is StepBlock => b.type === "step")}
+          ingredients={numbered.filter((b): b is IngredientBlock => b.type === "ingredient")}
+          baseServings={baseServings}
+          servings={displayServings}
+          occasionKey={occasionKey ?? null}
         />
       )}
     </div>

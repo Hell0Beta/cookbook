@@ -390,6 +390,12 @@ fallback) — opt in deliberately, not by accident.
   `prisma migrate dev` against this DB.
 - `NEXT_PUBLIC_API_URL` is baked into the web image at build time (Next.js
   inlines `NEXT_PUBLIC_*`). Changing it = rebuild, not restart.
+- The web image vendors the local STT model (whisper tiny.en q8, ~41 MB) in
+  its build stage (`pnpm vendor:stt`, development.md §14.1) — a download from
+  huggingface.co at IMAGE BUILD time only, same category as the lockfile
+  install; nothing model-related is fetched at runtime. `apps/web/public/models/`
+  is gitignored, so a fresh clone builds clean; the script is idempotent, and a
+  warm local `public/models/` copied into the build context skips the download.
 - Images: `node:22-bookworm-slim` (glibc). Avoid alpine — Prisma's native
   engine would need a musl build (`binaryTargets` in schema.prisma).
 - **Backup the volume, not the archive folder** — the `archive/` dataset is

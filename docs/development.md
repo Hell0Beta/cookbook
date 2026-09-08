@@ -69,6 +69,9 @@ These are picked specifically against this app's harder features (block editor, 
 ### YouTube import (§5)
 - **youtube-transcript** — pulls captions without full OAuth Data API setup, covering the transcript half of the extraction pipeline; pair with the official YouTube Data API only for description/metadata retrieval.
 
+### Voice assistant (§14)
+- **@huggingface/transformers** (transformers.js v3) — in-browser Whisper via ONNX Runtime Web (WASM, WebGPU where available); the only sanctioned STT path per §14.1. Model weights are vendored at build time, never fetched at runtime.
+
 ---
 
 ## 3. Data Model
@@ -140,6 +143,14 @@ These are picked specifically against this app's harder features (block editor, 
 **DiscoverSuggestion**
 - id, user_id, title, summary, why_recommended, image_url (nullable), recipe_id (nullable), generated_at
 - "Discover" output (§10): persisted per user, replaced wholesale on each ~24h refresh. recipe_id is set when the suggestion points at a local dataset recipe — the card links to the full recipe. image_url is the recipe's local `/images/...` hero.
+
+**CookingSession** (voice assistant — §14)
+- id, user_id, recipe_id, occasion_key (nullable — matches the meal-occasion identity the Reader already uses: `?date=&slot=` / `?upcoming=1` params), started_at, ended_at (nullable), last_seen_at
+- One row per (user, occasion) conversation, reused across re-opens within a reasonable window (~same day) so "Continue conversation" reloads context; a fresh row on "Start fresh" or a new occasion.
+
+**ChatMessage** (voice assistant — §14)
+- id, cooking_session_id (FK), role (`user` | `assistant`), content (text only — transcribed speech is stored as its transcript, audio is never persisted), intent (nullable: `step_control` | `ingredient_lookup` | `timer` | `llm` | `llm_fallback` | `quota_notice`), created_at
+- `intent` records which router branch produced the reply — rule-based answers (`step_control`, `ingredient_lookup`, `timer`) cost zero quota; `llm` marks OpenRouter turns. `llm_fallback` marks the quota-exhausted spoken notice.
 
 ---
 
@@ -315,9 +326,14 @@ DELETE /recipes/:id/favorite
 GET    /recommendations/internal
 GET    /recommendations/discover    # "Discover" tier from the local dataset (§10)
 POST   /recipes/:id/cooked          # cooking-mode open signal → CookedEvent (§10)
+
+POST   /chat/sessions               # { recipe_id, occasion_key? } — resume today's session for the occasion or create a new CookingSession (§14)
+GET    /chat/sessions/:id           # message history (session resume, §14)
+POST   /chat/sessions/:id/messages  # { content, context: { current_step_id, active_timers[] } } — LLM turn → persisted reply (§14); 429 llm_quota_exceeded at quota
+POST   /chat/sessions/:id/log       # { role, content, intent } — fire-and-forget persistence of client-resolved router turns + proactive notices (§14); never calls the LLM
 ```
 
-Error convention for AI-dependent endpoints (YouTube import, Discover): when the OpenRouter daily quota is hit, respond `429 { "error": "llm_quota_exceeded" }` (or include a `quota_exhausted: true` flag for stale-OK reads like Discover) so the frontend can show the §0 alert.
+Error convention for AI-dependent endpoints (YouTube import, Discover, chat LLM turns): when the OpenRouter daily quota is hit, respond `429 { "error": "llm_quota_exceeded" }` (or include a `quota_exhausted: true` flag for stale-OK reads like Discover) so the frontend can show the §0 alert. For the chat route specifically, the 429 must arrive *after* the user's message is persisted — the conversation log survives quota exhaustion, and the client speaks the §5 fallback notice and continues rule-based (§14).
 
 ---
 
@@ -333,6 +349,7 @@ Error convention for AI-dependent endpoints (YouTube import, Discover): when the
 8. **Phase 8 — Ingredient-based search + filter tag panel** (nested tag tree UI from `design.md` §2.4).
 9. **Phase 9 — Diet profile + Tier 1 recommendations.**
 10. **Phase 10 — Tier 2 AI-generated recommendations ("Discover").**
+11. **Phase 11 — Voice cooking assistant (§14):** chat session persistence + LLM chat route → collapsible chat panel (text-only) → TTS + proactive timer speech → intent router → local STT (speech input layered last onto a working chat surface).
 
 ---
 
@@ -345,3 +362,46 @@ Error convention for AI-dependent endpoints (YouTube import, Discover): when the
 - ~~Public recipe API choice~~ → TheMealDB default, Spoonacular behind a flag.
 - ~~Native mobile vs web~~ → responsive Next.js PWA, self-hosted.
 - ~~Claude API~~ → OpenRouter `nvidia/nemotron-3.5-lightning:free` with daily-limit handling.
+- ~~Voice assistant STT/TTS provider~~ (owner decision, 2026-09-02) → **fully local**: transformers.js (WASM/WebGPU) with build-time-vendored whisper models for STT, browser SpeechSynthesis for TTS. Latency traded away for §0 compliance. No §0 amendment needed — zero new outbound calls.
+- ~~Voice chat transport~~ → plain request/response, no SSE/token streaming (§0's "no streaming-heavy LLM usage patterns").
+
+---
+
+## 14. Voice Cooking Assistant (Cooking Session Chat)
+
+UX spec: design.md §3.3.4 (panel states, push-to-talk, spoken behavior, session resume) and design.md §5 (voice behavior at quota exhaustion). Conversation with the assistant during a cooking session: speech-first push-to-talk, text always available, replies rendered in the transcript and spoken via on-device TTS. **All speech processing is local** (owner decision — latency-tolerant, §0-clean).
+
+### 14.1 Speech I/O — on-device, zero outbound audio
+
+- **STT:** `@huggingface/transformers` (transformers.js v3) in a dedicated Web Worker. Model: whisper `tiny.en`, q8-quantized (~40 MB) default; `base.en` q8 is the documented quality upgrade if transcription on target devices demands it. Backend: WASM; WebGPU where the browser exposes it. **Never the Web Speech API** — Chrome's implementation streams audio to Google's servers, which is outside §0's outbound allowlist.
+- **Vendoring:** all model + runtime artifacts (ONNX weights, onnxruntime-web `.wasm` binaries) are vendored at build time under `apps/web/public/models/` and served from the app's own origin; transformers.js must be configured with local model paths and remote fetching disabled (its default is the HuggingFace hub — that would be a runtime download, §0 violation). Zero new outbound calls; §0 unchanged.
+- **Latency expectation:** single-digit seconds per short push-to-talk clip on mid-range phones (verify on real devices during Phase 11 — benchmark figures for WASM whisper are anecdotal, and cross-origin-isolation requirements affect them; adjust model size from the measurement, not from published numbers).
+- **COOP/COEP caveat:** multithreaded WASM (SharedArrayBuffer) needs cross-origin isolation, but `Cross-Origin-Embedder-Policy: require-corp` breaks the API-origin `<img>` loads (recipe covers) unless the API sends `Cross-Origin-Resource-Policy` headers. Prefer `credentialless` COEP or verify a workaround before enabling threads; single-threaded WASM is the acceptable fallback.
+- **TTS:** primary engine is **Kokoro-82M** (Apache-licensed, 82 M params) via `kokoro-js` in a dedicated Web Worker — natural speech, consistent across devices, fully local (q8 ONNX ~92 MB + voice embeddings, vendored under `apps/web/public/models/Kokoro-82M-v1.0-ONNX/` by `pnpm vendor:tts`, which also runs on `postinstall` so models are fetched at install/build time). Kokoro-js hardcodes a HuggingFace voice URL — `tts-worker.ts` pre-populates the `"kokoro-voices"` Cache API cache from the app's own origin so that fetch never fires (§0). The phonemizer dependency (espeak-ng) is asm.js embedded in the bundle — no network. **Fallback:** browser SpeechSynthesis while the model loads or if it fails to load — local, free, available even at LLM quota exhaustion. Default voice `af_heart`; settings later.
+
+### 14.2 Intent router — rule-based first (quota discipline)
+
+- `routeCookingIntent(text, context)` — a **pure function in `packages/shared`**, unit-tested, run **client-side before anything is sent**. Recipe-bound intents resolve locally with zero server round-trips and zero quota:
+  - **Step control** ("next", "repeat that", "go back", "what's step 4") → actions executed against the Reader + the Zustand timer store (§7's timer state is client-side; there is no server timer to command) — same semantics as shake-to-advance: scroll into focus, auto-start timers.
+  - **Ingredient lookup** ("how much flour?") → shared scaling helpers (§8.1) over the recipe's blocks at the current servings.
+  - **Timer control** ("set a timer for 5 minutes", "how long left?") → Zustand timer store actions; status reads live client state.
+  - These turns persist via fire-and-forget `POST /chat/sessions/:id/log` (user message + rule-based reply, intent recorded).
+- **Everything else** — substitutions, technique, general cooking questions (in scope, owner decision) — is an LLM turn: `POST /chat/sessions/:id/messages`.
+- The router must fail soft: an unrecognized query falls through to the LLM rather than dead-ending. It saves quota and latency; it does not gatekeep.
+
+### 14.3 LLM turns
+
+- Plain chat completion through the existing OpenRouter client (`services/openrouter.ts`) — **no SSE/token streaming** (§0). The panel's "thinking" state covers the free-tier wait.
+- Short replies by design: `maxTokens` ≈ 200 and the system prompt instructs ≤ 2 sentences, kitchen-terse. `reasoning: { effort: "none", exclude: true }` stays on (the model dumps chain-of-thought into `content` otherwise — see ai-pipeline agent decisions).
+- **Context budget** (ai-pipeline owns prompt assembly): recipe title + current servings, current step ± neighbors (from client-sent `context.current_step_id`), the full ingredient list at current scale, an active-timer summary, and the last ~8 persisted session turns. Not the whole recipe. The system prompt fixes the persona: terse, kitchen-appropriate, this-recipe-first.
+- **Quota:** 429 `llm_quota_exceeded` per §11's convention, *after* persisting the user's message. The client speaks the design.md §5 fallback notice and the session continues rule-based; the failed turn logs with intent `llm_fallback`.
+
+### 14.4 Session persistence
+
+- `CookingSession` / `ChatMessage` (§3). One session per (user, occasion) within a same-day-ish window; reopening offers "Continue conversation" / "Start fresh" (design.md §3.3.4). Resumed sessions reload recent turns as LLM context — no re-sending of history the server already has.
+- Proactive notices (spoken timer completions) log as `ChatMessage` rows (`role: assistant`, intent `timer`) so the transcript matches what was said aloud.
+- **Audio is never persisted** — transcript text only.
+
+### 14.5 Build order (Phase 11)
+
+Chat route + persistence → text-only panel → TTS + proactive timer speech → intent router → STT. Voice is an input modality layered onto a working chat feature — each stage lands on a usable surface.

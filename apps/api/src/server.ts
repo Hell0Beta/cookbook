@@ -12,6 +12,7 @@ import { tagsRouter } from "./routes/tags.js";
 import { groceryListsRouter } from "./routes/grocery-lists.js";
 import { mealPlansRouter } from "./routes/meal-plans.js";
 import { recommendationsRouter } from "./routes/recommendations.js";
+import { chatRouter } from "./routes/chat.js";
 import { imagesRouter } from "./routes/images.js";
 import { errorHandler } from "./middleware/error.js";
 
@@ -41,6 +42,7 @@ app.use("/tags", tagsRouter);
 app.use("/grocery-lists", groceryListsRouter);
 app.use("/meal-plans", mealPlansRouter);
 app.use("/recommendations", recommendationsRouter);
+app.use("/chat", chatRouter); // voice assistant (development.md §14)
 app.use("/images", imagesRouter);
 
 app.use(errorHandler);
