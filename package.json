@@ -9,7 +9,7 @@
     "dev": "pnpm --filter @cookbook/shared build && pnpm --parallel --filter @cookbook/web --filter @cookbook/api dev",
     "qr": "node scripts/qr.mjs",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm --filter @cookbook/shared build && pnpm -r typecheck",
     "test": "pnpm -r test",
     "db:generate": "pnpm --filter @cookbook/api db:generate",
     "db:migrate": "pnpm --filter @cookbook/api db:migrate",
