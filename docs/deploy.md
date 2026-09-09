@@ -197,9 +197,18 @@ Two wiring details that make this safe:
    --labels cookbook` — the `cookbook` label is what the workflow's
    `runs-on` matches, so future runners for other repos on this box never
    pick these jobs up.
-3. Install as a service under YOUR user account (so Docker Desktop, node/pnpm
-   and the shared pnpm store are reachable): `./svc.cmd install <username>`
-   then `./svc.cmd start`.
+3. Install as a service in the SAME config run, from an ELEVATED shell:
+   add `--runasservice` — the prompt's default account is
+   `NT AUTHORITY\NETWORK SERVICE`, **which cannot reach Docker Desktop or
+   pnpm; override it to `LocalSystem`** (verified working: Docker Desktop's
+   pipes accept LocalSystem, unlike Network Service). If you accepted the
+   Network Service default, fix without re-registering (elevated):
+   `sc.exe config actions.runner.Hell0Beta-cookbook.<name> obj= LocalSystem`
+   then restart the service. LocalSystem only sees the MACHINE `Path`, so
+   also add pnpm's dir (`C:\Users\<user>\AppData\Local\pnpm\bin`) there —
+   it does NOT share the user's pnpm store (first install downloads once).
+   Runner ≥2.337 folded service install into `config.cmd` — the old
+   `svc.cmd` no longer ships with the runner.
 4. Create `C:\actions-runner\.env` (the runner injects these into every job):
    ```
    COOKBOOK_ENV_FILE=C:/Users/User/Desktop/programmin/cookbook/.env
@@ -237,6 +246,16 @@ changes (`shell: bash` throughout; paths come from the runner env var).
 
 - **Run stuck "Queued"** — runner offline: is the service running
   (`Get-Service actions.runner.*`)? Label mismatch?
+- **"Windows Subsystem for Linux has no installed distributions"** — the
+  workflow's `shell: bash` resolved to WSL's `C:\Windows\System32\bash.exe`
+  (always first on PATH) instead of Git Bash. The runner does a plain PATH
+  search with no Git Bash preference, so Git's bin must come BEFORE System32.
+  One-time fix, elevated:
+  ```powershell
+  $p = [Environment]::GetEnvironmentVariable('Path','Machine')
+  [Environment]::SetEnvironmentVariable('Path', 'C:\Program Files\Git\bin;' + $p, 'Machine')
+  Restart-Service actions.runner.*  # services read PATH at start
+  ```
 - **"pnpm not on the service account's PATH"** — add pnpm's directory to the
   SYSTEM `Path` (services don't always see the user PATH) and restart the
   service.
