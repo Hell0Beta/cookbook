@@ -49,6 +49,11 @@ COPY apps/api/docker-entrypoint.sh /deployed/docker-entrypoint.sh
 COPY apps/api/prisma/schema.prisma /deployed/prisma/schema.prisma
 RUN cp -r apps/api/dist /deployed/dist \
   && cd /deployed \
+  # Strip CR: a Windows checkout (core.autocrlf=true) can hand this script
+  # CRLF line endings, and the container's exec then fails on the shebang
+  # ("no such file or directory") — normalize here so no checkout config
+  # can break the image.
+  && sed -i "s/\r$//" docker-entrypoint.sh \
   && chmod +x docker-entrypoint.sh \
   && ./node_modules/.bin/prisma generate
 
