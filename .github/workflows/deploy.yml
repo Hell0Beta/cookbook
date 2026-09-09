@@ -56,10 +56,16 @@ jobs:
 
       - name: Smoke test
         # Loopback-published ports on the tailscale sidecar (compose file).
+        # Poll instead of a fixed sleep — first boot runs `prisma db push`
+        # against a fresh volume and can take longer than a few seconds.
         shell: bash
         run: |
-          sleep 8
-          code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3001/tags)
+          code=""
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:3001/tags || true)
+            [ "$code" = "401" ] && break
+            sleep 2
+          done
           [ "$code" = "401" ] || { echo "api returned $code (expected 401)"; exit 1; }
           code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/)
           [ "$code" = "200" ] || { echo "web returned $code (expected 200)"; exit 1; }
