@@ -20,6 +20,7 @@ From development.md §12, Build Phase 11. Implements the cooking-session voice a
 - [x] TanStack Query-less direct fetch wiring for all `/chat/*` endpoints (session state is panel-local — a chat transcript is not cache-shared data) *(frontend)*
 - [x] Quota state: 429 → spoken/shown §5 fallback notice (exact `CHAT_QUOTA_NOTICE` text) + `flagLlmQuota()` banner; session continues rule-based *(frontend)*
 - [x] Session resume UI: "Continued from earlier today" strip + "Start fresh" (`fresh` flag) *(frontend)*
+- [x] **Steps tab (owner request, 2026-09-09)** — Chat/Steps tab toggle in the sheet header; steps card (image + instruction + §3.3.2-states timer chip) with swipe left/right navigation + prev/next chevrons; card follows the reader's scroll position and vice versa (reader = single source of truth; shake §3.3.3 drives it unchanged, no re-routing); swipe never auto-starts timers — shared logic in `lib/step-navigation.ts`, `resolveSwipe` unit-tested *(frontend)*
 
 ## TTS + proactive speech (development.md §14.1 TTS)
 - [x] SpeechSynthesis wrapper (`lib/tts.ts`): speak replies, default-voice selection, cancel-on-new, speaker mute toggle; every browser-API branch try/catch *(frontend)*

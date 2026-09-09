@@ -13,12 +13,17 @@ import { toast } from "sonner";
 import {
   ChefHat,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ListOrdered,
   LoaderCircle,
+  MessageCircle,
   Mic,
   RotateCcw,
   Send,
   Sparkles,
   Square,
+  Timer,
   Volume2,
   VolumeX,
   Zap,
@@ -36,6 +41,7 @@ import {
 } from "@cookbook/shared";
 import { api, ApiRequestError } from "@/lib/api";
 import { cancelSpeech, preloadTts, setSpeechEnabled, speak } from "@/lib/tts";
+import { currentReaderStep, revealStep, resolveSwipe } from "@/lib/step-navigation";
 import { setActiveChatSession } from "@/components/chat/chat-session-registry";
 import { useStt } from "@/components/chat/use-stt";
 import { formatClock, useTimerStore } from "@/components/timer/timer-store";
@@ -77,8 +83,12 @@ export function ChatPanel({
   const [thinking, setThinking] = useState(false);
   const [speechOn, setSpeechOn] = useState(true);
   const [input, setInput] = useState("");
+  // Chat ↔ Steps tab (design.md §3.3.4). Survives collapse — the component
+  // stays mounted, so switching back restores whichever view was active.
+  const [tab, setTab] = useState<"chat" | "steps">("chat");
   const quotaExceeded = useLlmQuotaExceeded();
   const transcriptRef = useRef<HTMLDivElement>(null);
+  const stepsCardRef = useRef<HTMLDivElement>(null);
 
   // Keep the newest turn visible as the thread grows.
   useEffect(() => {
@@ -150,15 +160,7 @@ export function ChatPanel({
   // "Current" step uses the reader's scroll-position convention (the same
   // midpoint rule as shake-to-advance).
 
-  const currentStepId = (): string | null => {
-    const mid = window.innerHeight / 2;
-    let current: StepBlock | null = null;
-    for (const s of steps) {
-      const el = document.getElementById(`step-${s.id}`);
-      if (el && el.getBoundingClientRect().top <= mid) current = s;
-    }
-    return current?.id ?? null;
-  };
+  const currentStepId = (): string | null => currentReaderStep(steps)?.id ?? null;
 
   const buildContext = (): ChatTurnContext => ({
     current_step_id: currentStepId(),
@@ -204,22 +206,9 @@ export function ChatPanel({
   const executeAction = (r: CookingIntent) => {
     if (r.intent === "step_control" && r.step_number !== null) {
       const target = steps.find((s) => s.step_number === r.step_number);
-      if (target) {
-        document
-          .getElementById(`step-${target.id}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Auto-start the step's timer, shake-to-advance semantics (§3.3.3).
-        if (target.duration_minutes && target.duration_minutes > 0 && !useTimerStore.getState().get(target.id)) {
-          useTimerStore.getState().start({
-            stepId: target.id,
-            recipeId,
-            recipeTitle,
-            stepNumber: target.step_number,
-            snippet: target.instruction_text.slice(0, 60),
-            totalSeconds: target.duration_minutes * 60,
-          });
-        }
-      }
+      // Shake-to-advance semantics (§3.3.3): navigating to the step also
+      // starts its timer unless one already lives for it.
+      if (target) revealStep(target, { recipeId, recipeTitle, startTimer: true });
     } else if (r.intent === "timer" && r.action === "start" && r.duration_seconds) {
       // A free-floating voice timer: synthetic step key — docks in the
       // floating pill like any timer, not tied to a step block.
@@ -334,6 +323,85 @@ export function ChatPanel({
 
   const currentStepNumber = steps.findIndex((s) => s.id === currentStepId()) + 1;
 
+  // ── steps tab (design.md §3.3.4) ───────────────────────────────────────────
+  // The shown step follows the reader's scroll position (single source of
+  // truth — same convention as currentStepId/buildContext), so shake (§3.3.3),
+  // voice step_control, and timer-pill hash navigation all update the card;
+  // swiping scrolls the reader via revealStep and the listener follows.
+
+  // Index into `steps` of the shown card; -1 while the reader sits above
+  // the first step (the card then shows step 1).
+  const [stepIdx, setStepIdx] = useState(-1);
+  // suppresses scroll-sync while a programmatic revealStep scroll settles,
+  // so the smooth scroll can't snap the card back to an intermediate step.
+  const revealSettlingUntil = useRef(0);
+
+  // Open the tab on whatever the reader currently shows.
+  const openStepsTab = () => {
+    setStepIdx(steps.findIndex((s) => s.id === currentStepId()));
+    setTab("steps");
+  };
+
+  const goToStep = (idx: number) => {
+    if (idx < 0 || idx >= steps.length) return;
+    revealSettlingUntil.current = Date.now() + 700;
+    setStepIdx(idx);
+    // Swipe never auto-starts timers (docs/agents/frontend.md Decisions) —
+    // tap the card's timer chip to start one.
+    revealStep(steps[idx]!, { recipeId, recipeTitle, startTimer: false });
+  };
+
+  // Follow the reader: any scroll (user drag behind the sheet, shake, hash
+  // navigation, voice step_control) re-resolves the current step. rAF-
+  // throttled; inert while a swipe-initiated smooth scroll settles.
+  useEffect(() => {
+    if (!open || tab !== "steps") return;
+    let raf = 0;
+    const sync = () => {
+      raf = 0;
+      if (Date.now() < revealSettlingUntil.current) return;
+      const current = currentReaderStep(steps);
+      setStepIdx(current ? steps.indexOf(current) : -1);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(sync);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, tab, steps]);
+
+  // Swipe classification lives in resolveSwipe (unit-tested); the handlers
+  // only capture the touch start/end coordinates.
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t) touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    const t = e.changedTouches[0];
+    if (!start || !t || steps.length === 0) return;
+    const width = stepsCardRef.current?.clientWidth ?? window.innerWidth;
+    const swipe = resolveSwipe(t.clientX - start.x, t.clientY - start.y, width);
+    if (!swipe) return;
+    if (swipe === "next") {
+      // Last card → same notice shake-to-advance gives at the end.
+      if (stepIdx >= steps.length - 1) {
+        toast.info("That's the last step");
+        return;
+      }
+      goToStep(stepIdx < 0 ? 0 : stepIdx + 1);
+    } else {
+      if (stepIdx <= 0) return; // before step 1 — quiet no-op
+      goToStep(stepIdx - 1);
+    }
+  };
+
   // ── push-to-talk STT (development.md §14.1, design.md §3.3.4) ─────────────
   // The transcript lands in the editable input — the pre-send affordance that
   // lets a mis-transcription be corrected before sending.
@@ -405,6 +473,45 @@ export function ChatPanel({
                 {timers.length > 0 && ` · ${timers.map((t) => formatClock(t.remainingSeconds)).join(" · ")}`}
               </p>
             </div>
+            {/* Chat ↔ Steps tab (design.md §3.3.4) — one view at a time. */}
+            <div
+              role="tablist"
+              aria-label="Assistant views"
+              className="flex shrink-0 items-center gap-1 rounded-(--radius-sm) border border-(--color-border) p-0.5"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "chat"}
+                aria-label="Chat"
+                title="Chat with the cooking assistant"
+                onClick={() => setTab("chat")}
+                className={cn(
+                  "flex size-7 items-center justify-center rounded-(--radius-sm) transition-colors",
+                  tab === "chat"
+                    ? "bg-(--color-accent)/15 text-(--color-accent)"
+                    : "text-(--color-text-secondary) hover:text-(--color-text-primary)",
+                )}
+              >
+                <MessageCircle className="size-4" strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "steps"}
+                aria-label="Recipe steps"
+                title="Recipe steps — swipe to navigate"
+                onClick={openStepsTab}
+                className={cn(
+                  "flex size-7 items-center justify-center rounded-(--radius-sm) transition-colors",
+                  tab === "steps"
+                    ? "bg-(--color-turmeric)/20 text-(--color-turmeric)"
+                    : "text-(--color-text-secondary) hover:text-(--color-text-primary)",
+                )}
+              >
+                <ListOrdered className="size-4" strokeWidth={1.5} />
+              </button>
+            </div>
             {quotaExceeded && (
               <span className="shrink-0 rounded-(--radius-sm) border border-(--color-error)/40 px-1.5 py-0.5 text-[length:var(--text-meta)] text-(--color-error)">
                 AI off
@@ -433,7 +540,8 @@ export function ChatPanel({
           </header>
 
           {/* Transcript */}
-          <div ref={transcriptRef} className="min-h-0 flex-1 overflow-y-auto px-(--spacing-cell) py-3">
+          {tab === "chat" && (
+            <div ref={transcriptRef} className="min-h-0 flex-1 overflow-y-auto px-(--spacing-cell) py-3">
             {creating && <p className="text-(--color-text-secondary)">Opening…</p>}
             {!creating && session && messages.length === 0 && (
               <p className="text-(--color-text-secondary)">
@@ -477,11 +585,64 @@ export function ChatPanel({
               ))}
             </ol>
           </div>
+          )}
+
+          {/* Steps tab (design.md §3.3.4) — the hands-messy step card: swipe
+              left/right or tap the chevrons to move between steps; shake
+              (§3.3.3) advances it too by scrolling the reader behind the
+              sheet. The shown step always follows the reader's position. */}
+          {tab === "steps" && (
+            <div
+              ref={stepsCardRef}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+              className="flex min-h-0 flex-1 touch-pan-y select-none flex-col px-(--spacing-cell) py-3"
+            >
+              {steps.length === 0 ? (
+                <p className="text-(--color-text-secondary)">This recipe has no steps yet.</p>
+              ) : (
+                <>
+                  <StepCard
+                    step={steps[Math.max(stepIdx, 0)]!}
+                    recipeId={recipeId}
+                    recipeTitle={recipeTitle}
+                  />
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                    <button
+                      type="button"
+                      aria-label="Previous step"
+                      disabled={stepIdx <= 0}
+                      onClick={() => goToStep(stepIdx - 1)}
+                      className="flex size-11 items-center justify-center rounded-(--radius-sm) border border-(--color-border) bg-(--color-page) text-(--color-text-primary) transition-colors hover:border-(--color-secondary) disabled:opacity-40"
+                    >
+                      <ChevronLeft className="size-5" strokeWidth={1.5} />
+                    </button>
+                    <p className="font-mono text-mono text-(--color-text-secondary)">
+                      {stepIdx < 0 ? `step 1 of ${steps.length}` : `step ${stepIdx + 1} of ${steps.length}`}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label="Next step"
+                      disabled={stepIdx >= steps.length - 1}
+                      onClick={() => {
+                        if (stepIdx >= steps.length - 1) return;
+                        goToStep(stepIdx < 0 ? 0 : stepIdx + 1);
+                      }}
+                      className="flex size-11 items-center justify-center rounded-(--radius-sm) border border-(--color-border) bg-(--color-page) text-(--color-text-primary) transition-colors hover:border-(--color-secondary) disabled:opacity-40"
+                    >
+                      <ChevronRight className="size-5" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Status line (design.md §3.3.4: listening / transcribing / thinking)
               + text input — voice is primary, typing the always-available equal
               path. Transcribed speech lands in the input for correction before
-              sending. */}
+              sending. Chat tab only: the steps card owns the full sheet. */}
+          {tab === "chat" && (
           <footer className="border-t border-(--color-border) px-(--spacing-cell) py-2.5">
             <div className="flex h-4 items-center">
               {listening && (
@@ -558,8 +719,89 @@ export function ChatPanel({
               </button>
             </form>
           </footer>
+          )}
         </section>
       )}
     </>
+  );
+}
+
+// ── steps tab card (design.md §3.3.4) ─────────────────────────────────────
+// One step, large type for hands-messy cooking. Timer chip follows the
+// read-mode StepBlockView states (§3.3.2): idle → tap to start, running →
+// live countdown, paused → resume. Never auto-started by navigation.
+
+function StepCard({
+  step,
+  recipeId,
+  recipeTitle,
+}: {
+  step: StepBlock;
+  recipeId: string;
+  recipeTitle: string;
+}) {
+  const start = useTimerStore((s) => s.start);
+  const toggle = useTimerStore((s) => s.toggle);
+  // Selector scoped to THIS step's timer — other timers ticking don't
+  // re-render the card.
+  const active = useTimerStore((s) => s.timers.find((t) => t.stepId === step.id));
+
+  return (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {step.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element -- local file
+        // storage served by the API (development.md §0), no CDN
+        <img
+          src={step.image_url}
+          alt={`Step ${step.step_number}`}
+          className="mb-3 max-h-40 w-full rounded-(--radius-sm) border border-(--color-border) object-cover"
+        />
+      )}
+      <p className="whitespace-pre-wrap text-[length:var(--text-body)] leading-relaxed">
+        {step.instruction_text}
+      </p>
+      {step.duration_minutes !== null && step.duration_minutes > 0 && (
+        active ? (
+          <button
+            type="button"
+            onClick={() => toggle(step.id)}
+            aria-label={active.running ? "Pause timer" : "Resume timer"}
+            className={cn(
+              "mt-3 inline-flex items-center gap-1.5 rounded-(--radius-sm) border px-2.5 py-1 font-[family-name:var(--font-mono)] text-[length:var(--text-meta)]",
+              active.completed
+                ? "animate-pulse border-(--color-turmeric) bg-(--color-turmeric) text-(--color-text-primary)"
+                : active.running
+                  ? "border-(--color-turmeric) bg-(--color-turmeric)/20 text-(--color-text-primary)"
+                  : "border-(--color-border) bg-(--color-surface-container) text-(--color-text-secondary)",
+            )}
+          >
+            {active.completed
+              ? "done"
+              : active.running
+                ? `${formatClock(active.remainingSeconds)} left`
+                : `paused ${formatClock(active.remainingSeconds)}`}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              start({
+                stepId: step.id,
+                recipeId,
+                recipeTitle,
+                stepNumber: step.step_number,
+                snippet: step.instruction_text.slice(0, 60),
+                totalSeconds: step.duration_minutes! * 60,
+              })
+            }
+            aria-label={`Start ${step.duration_minutes} minute timer for step ${step.step_number}`}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-(--radius-sm) bg-(--color-surface-container) px-2.5 py-1 font-[family-name:var(--font-mono)] text-[length:var(--text-meta)] text-(--color-text-secondary) transition-colors hover:bg-(--color-surface-container-high)"
+          >
+            <Timer className="size-3.5 text-(--color-turmeric)" strokeWidth={1.5} />
+            {step.duration_minutes} min
+          </button>
+        )
+      )}
+    </div>
   );
 }
