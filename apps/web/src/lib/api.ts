@@ -60,6 +60,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ username }),
     }),
+  logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
   me: () => request<{ id: string; username: string; display_name: string }>("/users/me"),
 
   listRecipes: (page = 1) =>

@@ -151,6 +151,7 @@ Desktop/tablet: true 3-column layout. Mobile: collapses to a single column with 
 
 ### 3.7 Diet Preferences / Profile
 - Diet type(s), allergies/exclusions, disliked ingredients, preferred cuisines — feeds the recommendation engine (development doc §8).
+- Auth card (username-only, §0): when signed in, shows the username plus a **sign out** action; when signed out, the sign-in / create-account form.
 
 ---
 

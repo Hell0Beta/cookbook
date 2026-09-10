@@ -286,6 +286,7 @@ Two-tier approach:
 
 ```
 POST   /auth/signup | /auth/login        # username-only (§0); returns signed session cookie
+POST   /auth/logout                     # clears the session cookie (Profile screen)
 GET    /users/me
 PUT    /users/me/diet-profile
 

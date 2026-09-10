@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { LogOut } from "lucide-react";
 import { api, ApiRequestError } from "@/lib/api";
 
 export function AuthPanel() {
@@ -29,17 +30,39 @@ export function AuthPanel() {
     }
   };
 
+  // The ["me"] query refetch 401s after the cookie is cleared, which flips
+  // the card back to the sign-in form — same reset path sign-in uses.
+  const signout = async () => {
+    try {
+      await api.logout();
+      await queryClient.invalidateQueries();
+      toast.success("Signed out");
+    } catch {
+      toast.error("Couldn't sign out — try again");
+    }
+  };
+
   if (isLoading) return <p className="text-(--color-text-secondary)">…</p>;
 
   if (me) {
     return (
-      <div className="rounded-(--radius-bento) border border-(--color-border) bg-(--color-surface) p-(--spacing-cell)">
-        <p className="font-[family-name:var(--font-display)] font-semibold">
-          Signed in as {me.display_name}
-        </p>
-        <p className="mt-1 text-[length:var(--text-meta)] text-(--color-text-secondary)">
-          Set your diet preferences below to tune recommendations.
-        </p>
+      <div className="flex items-center gap-4 rounded-(--radius-bento) border border-(--color-border) bg-(--color-surface) p-(--spacing-cell)">
+        <div className="min-w-0 flex-1">
+          <p className="font-[family-name:var(--font-display)] font-semibold">
+            Signed in as {me.display_name}
+          </p>
+          <p className="mt-1 text-[length:var(--text-meta)] text-(--color-text-secondary)">
+            Set your diet preferences below to tune recommendations.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void signout()}
+          className="flex shrink-0 items-center gap-1.5 rounded-(--radius-sm) border border-(--color-border) px-4 py-2 font-medium transition-colors hover:border-(--color-error) hover:text-(--color-error)"
+        >
+          <LogOut className="size-4" strokeWidth={1.5} />
+          Sign out
+        </button>
       </div>
     );
   }
