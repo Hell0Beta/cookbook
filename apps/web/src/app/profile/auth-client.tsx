@@ -30,13 +30,13 @@ export function AuthPanel() {
     }
   };
 
-  // The ["me"] query refetch 401s after the cookie is cleared, which flips
-  // the card back to the sign-in form — same reset path sign-in uses.
+  // Full reload rather than invalidateQueries: clears every cached query
+  // and in-memory state tied to the signed-in user in one shot — the page
+  // comes back with ["me"] fetched fresh (401 → the sign-in form).
   const signout = async () => {
     try {
       await api.logout();
-      await queryClient.invalidateQueries();
-      toast.success("Signed out");
+      window.location.reload();
     } catch {
       toast.error("Couldn't sign out — try again");
     }

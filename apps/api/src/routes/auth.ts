@@ -54,6 +54,8 @@ authRouter.post("/login", async (req, res, next) => {
 // POST /auth/logout — clear the session cookie. Unauthenticated-tolerant:
 // clearing an absent cookie is a no-op, so no requireAuth gate.
 authRouter.post("/logout", (req, res) => {
+  
   clearSessionCookie(res);
+  
   res.json({ ok: true });
 });
