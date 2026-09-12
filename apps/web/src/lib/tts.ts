@@ -14,6 +14,16 @@ let kokoroReady = false;
 let kokoroFailed = false;
 let currentSource: AudioBufferSourceNode | null = null;
 let audioCtx: AudioContext | null = null;
+// Completion callback for the current utterance (always-on mic sequencing —
+// development.md §14: the mic re-arms when the reply finishes speaking).
+// Fire-once: every path nulls it before calling.
+let currentOnEnd: (() => void) | null = null;
+
+function fireOnEnd() {
+  const cb = currentOnEnd;
+  currentOnEnd = null;
+  cb?.();
+}
 
 /** Kick off model loading — call when the chat panel opens so the model is
  *  warm by the first reply. Safe to call repeatedly; never throws. */
@@ -34,6 +44,8 @@ function ensureWorker(): Worker | null {
           kokoroFailed = true; // permanently fall back — the model is one-time setup
           w.terminate();
           worker = null;
+          // A speak() in flight will never produce audio — release its waiter.
+          fireOnEnd();
         }
       } else if (msg.type === "audio" && msg.samples && msg.sample_rate) {
         playPcm(msg.samples, msg.sample_rate);
@@ -67,11 +79,14 @@ function playPcm(samples: Float32Array, sampleRate: number) {
     source.connect(audioCtx.destination);
     source.onended = () => {
       if (currentSource === source) currentSource = null;
+      fireOnEnd();
     };
     currentSource = source;
     source.start();
   } catch {
-    // Playback failed — the transcript still carries the reply
+    // Playback failed — the transcript still carries the reply, but the
+    // always-on mic must not wait forever.
+    fireOnEnd();
   }
 }
 
@@ -105,6 +120,9 @@ export function cancelSpeech() {
   } catch {
     // speechSynthesis unavailable — nothing to cancel
   }
+  // An interrupted reply still counts as "done speaking" — the always-on mic
+  // resumes instead of waiting on playback that will never end.
+  fireOnEnd();
 }
 
 export function isSpeaking(): boolean {
@@ -159,20 +177,32 @@ try {
 function speakFallback(text: string) {
   try {
     const synth = window.speechSynthesis;
-    if (!synth) return;
+    if (!synth) {
+      fireOnEnd(); // nothing will speak — release the waiter
+      return;
+    }
     const utter = new SpeechSynthesisUtterance(text);
     const voice = defaultVoice();
     if (voice) utter.voice = voice;
+    utter.onend = fireOnEnd;
+    utter.onerror = fireOnEnd;
     synth.speak(utter);
   } catch {
-    // TTS unavailable — the transcript carries the reply
+    // TTS unavailable — the transcript carries the reply, release the waiter
+    fireOnEnd();
   }
 }
 
-/** Speak a reply aloud. Fire-and-forget; never throws. */
-export function speak(text: string) {
-  if (!enabled || !text.trim()) return;
+/** Speak a reply aloud. Fire-and-forget; never throws. `onEnd` fires once
+ * when playback finishes OR is interrupted/cancelled — the always-on mic
+ * mode uses it to know when to resume listening (development.md §14). */
+export function speak(text: string, onEnd?: () => void) {
+  if (!enabled || !text.trim()) {
+    onEnd?.(); // muted/empty reply — still counts as spoken for sequencing
+    return;
+  }
   cancelSpeech(); // one reply at a time — a new reply interrupts the old
+  currentOnEnd = onEnd ?? null;
   const w = ensureWorker();
   if (kokoroReady && w) {
     w.postMessage({ type: "speak", text });
