@@ -1,13 +1,19 @@
 "use client";
 
 // Voice Assistant Panel — design.md §3.3.4, development.md §14. Collapsed =
-// floating MIC button docked bottom-right (sibling elevation to the timer
-// pill, which docks bottom-left). Expanded = bottom sheet over the reader:
-// session header (recipe, current step, timer chips), multiturn transcript,
-// push-to-talk mic + always-available text input. Transcribed speech lands in
-// the editable input for correction before sending; replies are spoken via
-// on-device TTS. Rule-based intents resolve client-side (§14.2) — only free
-// questions cost an LLM turn.
+// the assistant BAR docked bottom-right (sibling elevation to the timer
+// pill, which docks bottom-left): expand/resize control, live status or
+// latest-reply snippet, record button, settings gear — recording works
+// without expanding. Expanded = resizable bottom sheet over the reader
+// (drag the top edge / the bar's control to size it, tap to cycle
+// bar → half → tall): session header (recipe, current step, timer chips),
+// multiturn transcript, push-to-talk mic + always-available text input.
+// Recordings are sent straight to the assistant ("instant") or land in the
+// editable input for correction ("review") per the voice settings; replies
+// are spoken via on-device TTS. Rule-based intents resolve client-side
+// (§14.2) — only free questions cost an LLM turn. Mic modes: Standard
+// (sleeps after each reply) and Always-on (keeps listening; silence ends a
+// turn — development.md §14).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -43,6 +49,9 @@ import { api, ApiRequestError } from "@/lib/api";
 import { cancelSpeech, preloadTts, setSpeechEnabled, speak } from "@/lib/tts";
 import { currentReaderStep, revealStep, resolveSwipe } from "@/lib/step-navigation";
 import { setActiveChatSession } from "@/components/chat/chat-session-registry";
+import { ChatBar } from "@/components/chat/chat-bar";
+import { ChatSettingsButton, useChatSettings } from "@/components/chat/chat-settings";
+import { ResizeHandle, SHEET_HEIGHT_MAX_VH, SHEET_HEIGHT_MIN_VH } from "@/components/chat/resize-handle";
 import { useStt } from "@/components/chat/use-stt";
 import { formatClock, useTimerStore } from "@/components/timer/timer-store";
 import { flagLlmQuota, useLlmQuotaExceeded } from "@/components/llm-quota";
@@ -56,6 +65,8 @@ interface PendingMessage {
   content: string;
 }
 type TranscriptMessage = ChatMessage | PendingMessage;
+
+const PANEL_HEIGHT_KEY = "cookbook:chatPanelHeight";
 
 let pendingCounter = 0;
 
@@ -76,7 +87,18 @@ export function ChatPanel({
   servings: number;
   occasionKey: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  // Form: collapsed bar or expanded sheet. The component stays mounted
+  // across switches, so transcript/session/tab state survives (§3.3.4).
+  const [form, setForm] = useState<"bar" | "sheet">("bar");
+  const [heightVh, setHeightVh] = useState(() => {
+    try {
+      const v = Number(localStorage.getItem(PANEL_HEIGHT_KEY));
+      if (Number.isFinite(v) && v >= SHEET_HEIGHT_MIN_VH && v <= SHEET_HEIGHT_MAX_VH) return v;
+    } catch {
+      // private mode — default size
+    }
+    return 55;
+  });
   const [session, setSession] = useState<ChatSessionResponse | null>(null);
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [creating, setCreating] = useState(false);
@@ -86,9 +108,30 @@ export function ChatPanel({
   // Chat ↔ Steps tab (design.md §3.3.4). Survives collapse — the component
   // stays mounted, so switching back restores whichever view was active.
   const [tab, setTab] = useState<"chat" | "steps">("chat");
+  // Transient bar notice ("Didn't catch that") — cleared on a timer.
+  const [notice, setNotice] = useState<string | null>(null);
   const quotaExceeded = useLlmQuotaExceeded();
   const transcriptRef = useRef<HTMLDivElement>(null);
   const stepsCardRef = useRef<HTMLDivElement>(null);
+
+  // sessionRef mirrors `session` for the async paths (STT results, queued
+  // sends) that must not read a stale closure.
+  const sessionRef = useRef<ChatSessionResponse | null>(null);
+  // An instant voice turn that arrived before the session was ready.
+  const queuedVoiceRef = useRef<string | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flashNotice = (text: string) => {
+    setNotice(text);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setNotice(null), 4000);
+  };
+
+  // ── voice settings (design.md §3.3.4 "Voice modes & settings") ────────────
+  const { settings } = useChatSettings();
+  const instantSend = settings.sendOnStop === "instant" || settings.micMode === "always-on";
+  const instantSendRef = useRef(instantSend);
+  instantSendRef.current = instantSend;
 
   // Keep the newest turn visible as the thread grows.
   useEffect(() => {
@@ -104,6 +147,14 @@ export function ChatPanel({
     [allTimers, recipeId],
   );
 
+  // Latest assistant reply — the collapsed bar's idle snippet.
+  const lastReply = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]!.role === "assistant") return messages[i]!.content;
+    }
+    return null;
+  }, [messages]);
+
   // ── session lifecycle ──────────────────────────────────────────────────────
 
   const openSession = async (fresh = false) => {
@@ -114,27 +165,42 @@ export function ChatPanel({
         occasion_key: occasionKey,
         fresh,
       });
+      sessionRef.current = res;
       setSession(res);
       setMessages(res.messages);
+      // An instant voice turn recorded before the session resolved — send it
+      // now that persistence is ready.
+      if (queuedVoiceRef.current) {
+        const queued = queuedVoiceRef.current;
+        queuedVoiceRef.current = null;
+        void send(queued, "voice");
+      }
     } catch (err) {
       toast.error(
         err instanceof ApiRequestError && err.status === 401
           ? "Sign in to use the cooking assistant"
           : "Couldn't open the cooking assistant — try again",
       );
+      queuedVoiceRef.current = null;
     } finally {
       setCreating(false);
     }
   };
 
-  // Opening the panel resolves today's session (resume-today-or-create, §14.4)
-  // and warms the TTS model so the first spoken reply uses Kokoro, not the
-  // fallback (development.md §14.1).
+  // Bootstrapping the session + TTS model: when the sheet opens, or when a
+  // recording starts from the bar with the sheet never opened. Warms Kokoro
+  // so the first spoken reply isn't the fallback voice (§14.1).
+  const ensureSession = () => {
+    preloadTts();
+    if (!sessionRef.current && !creating) void openSession();
+  };
+
+  // Opening the sheet resolves today's session (resume-today-or-create,
+  // §14.4).
   useEffect(() => {
-    if (open && !session && !creating) void openSession();
-    if (open) preloadTts();
+    if (form === "sheet") ensureSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, session]);
+  }, [form, session]);
 
   // Register the session for the app-root proactive timer-speech watcher
   // (proactive-timer-speech.tsx) — spoken timer alerts keep working after the
@@ -151,9 +217,18 @@ export function ChatPanel({
 
   // Closing interrupts in-flight speech (the sheet is the TTS surface).
   const collapse = () => {
-    setOpen(false);
+    setForm("bar");
     cancelSpeech();
   };
+
+  // Leave nothing speaking when the reader unmounts.
+  useEffect(
+    () => () => {
+      cancelSpeech();
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    },
+    [],
+  );
 
   // ── cooking context (development.md §14.3) ────────────────────────────────
   // Step position and timer state are client-side, so the client reports them.
@@ -176,7 +251,8 @@ export function ChatPanel({
   // development.md §14.2: the router runs client-side BEFORE anything is sent.
   // Recipe-bound intents resolve locally (zero quota, instant), execute against
   // the reader/timer stores, and persist via the fire-and-forget log route;
-  // only `llm` intents reach POST /messages.
+  // only `llm` intents reach POST /messages. Voice turns marked `via: "voice"`
+  // may auto-send (settings §3.3.4); typed turns always take the input path.
 
   const stepsForRouter = (): RouterContext => ({
     recipe_title: recipeTitle,
@@ -223,22 +299,29 @@ export function ChatPanel({
     }
   };
 
-  const send = async (raw: string) => {
+  const send = async (raw: string, via: "text" | "voice" = "text") => {
     const content = raw.trim();
-    if (!content || thinking) return;
+    if (!content) return;
+    if (thinking) {
+      // Typed input is disabled while thinking, but an auto-sent voice turn
+      // can land mid-reply — never eat the user's words.
+      if (via === "voice") setInput(content);
+      return;
+    }
     setInput("");
 
     // 1. Rule-based intents resolve locally (instant, quota-free).
+    const sess = sessionRef.current;
     const routed = routeCookingIntent(content, stepsForRouter());
     if (routed.intent !== "llm") {
       executeAction(routed);
       const now = new Date().toISOString();
       setMessages((m) => [
         ...m,
-        session
+        sess
           ? {
               id: `local-user-${Date.now()}`,
-              cooking_session_id: session.session.id,
+              cooking_session_id: sess.session.id,
               role: "user" as const,
               content,
               intent: routed.intent as ChatMessage["intent"],
@@ -247,29 +330,37 @@ export function ChatPanel({
           : { pending: true, id: `local-${Date.now()}`, role: "user" as const, content },
         {
           id: `local-reply-${Date.now()}`,
-          cooking_session_id: session?.session.id ?? "",
+          cooking_session_id: sess?.session.id ?? "",
           role: "assistant" as const,
           content: routed.reply,
           intent: routed.intent as ChatMessage["intent"],
           created_at: now,
         },
       ]);
-      speak(routed.reply);
-      if (session) {
+      speakReply(routed.reply);
+      if (sess) {
         // Fire-and-forget persistence of both sides of the turn (§14.2).
         void api
-          .logChatTurn(session.session.id, { role: "user", content, intent: routed.intent })
+          .logChatTurn(sess.session.id, { role: "user", content, intent: routed.intent })
           .catch(() => undefined);
         void api
-          .logChatTurn(session.session.id, { role: "assistant", content: routed.reply, intent: routed.intent })
+          .logChatTurn(sess.session.id, { role: "assistant", content: routed.reply, intent: routed.intent })
           .catch(() => undefined);
       }
       return;
     }
 
     // 2. LLM turn.
-    if (!session) {
-      setInput(content); // session still opening — don't eat the text
+    if (!sess) {
+      if (via === "voice") {
+        // Instant voice with the session still opening — hold the turn and
+        // flush it when the session resolves (an already-creating open will
+        // flush the queue too, so never stack a second request).
+        queuedVoiceRef.current = content;
+        if (!creating) void openSession();
+      } else {
+        setInput(content); // session still opening — don't eat the text
+      }
       return;
     }
     const optimistic: PendingMessage = {
@@ -281,7 +372,7 @@ export function ChatPanel({
     setMessages((m) => [...m, optimistic]);
     setThinking(true);
     try {
-      const res = await api.sendChatMessage(session.session.id, {
+      const res = await api.sendChatMessage(sess.session.id, {
         content,
         recipe_id: recipeId,
         context: buildContext(),
@@ -292,7 +383,7 @@ export function ChatPanel({
         res.user_message,
         res.reply,
       ]);
-      speak(res.reply.content);
+      speakReply(res.reply.content);
     } catch (err) {
       if (err instanceof ApiRequestError && err.code === "llm_quota_exceeded") {
         // The server persisted the user message + the spoken fallback notice
@@ -302,19 +393,21 @@ export function ChatPanel({
           ...m.filter((x) => x.id !== optimistic.id),
           {
             id: `quota-${optimistic.id}`,
-            cooking_session_id: session.session.id,
+            cooking_session_id: sess.session.id,
             role: "assistant",
             content: CHAT_QUOTA_NOTICE,
             intent: "llm_fallback",
             created_at: new Date().toISOString(),
           },
         ]);
-        speak(CHAT_QUOTA_NOTICE);
+        speakReply(CHAT_QUOTA_NOTICE);
       } else {
         // Keep the user's text (retry by resending), just surface the failure.
         toast.error("The assistant couldn't answer — check your connection and retry");
         setMessages((m) => m.filter((x) => x.id !== optimistic.id));
         setInput(content);
+        // No reply will be spoken — the always-on mic must not wait forever.
+        void stt.resume();
       }
     } finally {
       setThinking(false);
@@ -355,7 +448,7 @@ export function ChatPanel({
   // navigation, voice step_control) re-resolves the current step. rAF-
   // throttled; inert while a swipe-initiated smooth scroll settles.
   useEffect(() => {
-    if (!open || tab !== "steps") return;
+    if (form !== "sheet" || tab !== "steps") return;
     let raf = 0;
     const sync = () => {
       raf = 0;
@@ -372,7 +465,7 @@ export function ChatPanel({
       if (raf) cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, tab, steps]);
+  }, [form, tab, steps]);
 
   // Swipe classification lives in resolveSwipe (unit-tested); the handlers
   // only capture the touch start/end coordinates.
@@ -402,63 +495,120 @@ export function ChatPanel({
     }
   };
 
-  // ── push-to-talk STT (development.md §14.1, design.md §3.3.4) ─────────────
-  // The transcript lands in the editable input — the pre-send affordance that
-  // lets a mis-transcription be corrected before sending.
+  // ── voice input (development.md §14.1, design.md §3.3.4) ──────────────────
+  // A finished recording either sends straight away ("instant" — or any
+  // always-on turn) or lands in the editable input for correction ("review"
+  // — the §3.3.4 editing affordance).
   const inputRef = useRef<HTMLInputElement>(null);
-  const stt = useStt((text) => {
-    setInput((prev) => (prev ? `${prev} ${text}` : text));
-    inputRef.current?.focus();
-  });
+  const stt = useStt(
+    (text) => {
+      if (instantSendRef.current) void send(text, "voice");
+      else {
+        setInput((prev) => (prev ? `${prev} ${text}` : text));
+        inputRef.current?.focus();
+      }
+    },
+    () => flashNotice("Didn't catch that — try again"),
+  );
 
   useEffect(() => {
     if (stt.error) toast.error(stt.error);
   }, [stt.error]);
+
+  // Always-on mode: open the mic and keep it open across turns; Standard
+  // sleeps after each reply. resume() re-arms when a spoken reply ends —
+  // no-op in Standard, so the sequencing lives in speakReply below.
+  useEffect(() => {
+    if (settings.micMode === "always-on") void stt.startContinuous();
+    else stt.stopContinuous();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.micMode]);
+
+  // Speak a reply; when it finishes (or is interrupted), the always-on mic
+  // picks back up (development.md §14).
+  const speakReply = (text: string) => {
+    speak(text, () => void stt.resume());
+  };
 
   const toggleMic = () => {
     // Interruption v1 (design.md §3.3.4): tapping the mic cancels in-flight
     // speech, then arms.
     cancelSpeech();
     if (stt.status === "listening") stt.stop();
-    else if (stt.status === "idle" || stt.status === "error") void stt.arm();
+    else if (stt.status === "idle" || stt.status === "error") {
+      // Recording from the collapsed bar must still have a session + warm
+      // TTS by the time the reply arrives.
+      ensureSession();
+      if (settings.micMode === "always-on") void stt.startContinuous();
+      else void stt.arm();
+    }
   };
 
   const micBusy = stt.status === "loading-model" || stt.status === "transcribing";
   const listening = stt.status === "listening";
 
+  // ── form + resizing (design.md §3.3.4) ─────────────────────────────────────
+  // Tap cycles bar → sheet (remembered height) → tall sheet → bar; a drag
+  // sets a continuous height that becomes the remembered sheet height.
+
+  const resizeTo = (vh: number) => {
+    setHeightVh(vh);
+    try {
+      localStorage.setItem(PANEL_HEIGHT_KEY, String(vh));
+    } catch {
+      // persistence is best-effort
+    }
+  };
+
+  const cycleSize = () => {
+    if (form === "bar") setForm("sheet");
+    else if (heightVh < 70) resizeTo(85);
+    else setForm("bar");
+  };
+
+  // Dragging from the bar grows the sheet live under the pointer.
+  const dragResize = (vh: number) => {
+    setForm("sheet");
+    resizeTo(vh);
+  };
+
   return (
     <>
-      {/* Collapsed — the floating MIC button (design.md §3.3.4), bottom-right,
-          sibling of the timer pill (bottom-left, same elevation). One tap
-          opens the panel and arms push-to-talk: talk, tap the mic again (or
-          the send button) to finish. */}
-      {!open && (
-        <button
-          type="button"
-          aria-label="Open cooking assistant and start talking"
-          onClick={() => {
-            setOpen(true);
-            cancelSpeech();
-            if (stt.status === "idle") void stt.arm();
-          }}
-          className={cn(
-            "fixed bottom-24 right-4 z-30 flex size-12 items-center justify-center rounded-full border transition-colors",
-            listening
-              ? "border-(--color-accent) bg-(--color-accent) text-white"
-              : "border-(--color-border) bg-(--color-surface) text-(--color-accent) hover:bg-(--color-surface-container)",
-          )}
-        >
-          <Mic className="size-5" strokeWidth={1.5} />
-        </button>
+      {/* Collapsed — the assistant bar (design.md §3.3.4), bottom-right,
+          sibling of the timer pill (bottom-left, same elevation). Recording
+          and settings work right here; tap the middle to open the sheet. */}
+      {form === "bar" && (
+        <ChatBar
+          listening={listening}
+          micBusy={micBusy}
+          transcribing={stt.status === "transcribing"}
+          thinking={thinking}
+          continuous={stt.continuous}
+          notice={notice}
+          lastReply={lastReply}
+          onExpandTap={cycleSize}
+          onResize={dragResize}
+          onOpenSheet={() => setForm("sheet")}
+          onRecordToggle={toggleMic}
+        />
       )}
 
-      {/* Expanded — bottom sheet over the reader (design.md §3.3.4). */}
-      {open && (
+      {/* Expanded — resizable bottom sheet over the reader (design.md
+          §3.3.4). Drag the top edge (or the bar's control) to size it. */}
+      {form === "sheet" && (
         <section
           aria-label="Cooking assistant"
           className="fixed inset-x-(--spacing-margin) bottom-24 z-40 mx-auto flex max-w-2xl flex-col rounded-(--radius-bento) border border-(--color-border) bg-(--color-surface)"
-          style={{ height: "55vh" }}
+          style={{ height: `${heightVh}vh` }}
         >
+          {/* Top-edge drag strip (desktop mouse) — tap cycles sizes. */}
+          <ResizeHandle
+            onTap={cycleSize}
+            onResize={resizeTo}
+            ariaLabel="Resize the cooking assistant"
+            className="absolute inset-x-0 top-0 h-2"
+          />
+
           {/* Session header */}
           <header className="flex items-center gap-2 border-b border-(--color-border) px-(--spacing-cell) py-2.5">
             <ChefHat className="size-4 shrink-0 text-(--color-accent)" strokeWidth={1.5} />
@@ -517,6 +667,7 @@ export function ChatPanel({
                 AI off
               </span>
             )}
+            <ChatSettingsButton className="flex size-7 items-center justify-center" />
             <button
               type="button"
               aria-label={speechOn ? "Mute spoken replies" : "Unmute spoken replies"}
@@ -640,8 +791,9 @@ export function ChatPanel({
 
           {/* Status line (design.md §3.3.4: listening / transcribing / thinking)
               + text input — voice is primary, typing the always-available equal
-              path. Transcribed speech lands in the input for correction before
-              sending. Chat tab only: the steps card owns the full sheet. */}
+              path. Voice sends per the settings; in review mode transcribed
+              speech lands in the input for correction before sending. Chat tab
+              only: the steps card owns the full sheet. */}
           {tab === "chat" && (
           <footer className="border-t border-(--color-border) px-(--spacing-cell) py-2.5">
             <div className="flex h-4 items-center">
@@ -652,7 +804,9 @@ export function ChatPanel({
                     <span className="w-0.5 animate-pulse bg-(--color-accent)" style={{ height: "10px", animationDelay: "0.15s" }} />
                     <span className="w-0.5 animate-pulse bg-(--color-accent)" style={{ height: "8px", animationDelay: "0.3s" }} />
                   </span>
-                  Listening — tap the mic to stop
+                  {stt.continuous
+                    ? "Always-on — a pause sends your turn"
+                    : "Listening — tap the mic to stop"}
                 </span>
               )}
               {stt.status === "loading-model" && (

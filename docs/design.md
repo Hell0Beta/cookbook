@@ -101,22 +101,27 @@ Because a single dashboard "Upcoming Recipe" or planned meal can represent **mul
 #### 3.3.4 Voice Assistant Panel
 A collapsible conversational panel scoped to the Recipe Reader in **read (cooking) mode** — the hands-free companion to the Timer Tool and Shake-to-Advance. Speech is the primary input; a text field is always present as the equal fallback. **Fully local speech**: transcription runs on-device (development.md §14), TTS is the browser's speech synthesis — no speech audio ever leaves the device.
 
-**Collapsed state — floating mic button:**
-- A circular floating button docked bottom-right, above the floating timer pill (§3.3.2) when both are visible — visually siblings, same elevation treatment, distinct accent color.
-- Shows mic icon; when a timer is running behind it, no badge (timer state belongs to the timer pill).
-- Tap → expands the panel. Long-press (or a settings affordance in the expanded panel) → starts capture immediately without expanding (power-user shortcut).
+**Collapsed state — the assistant bar:**
+- A rounded horizontal bar docked bottom-right, above the floating timer pill (§3.3.2) when both are visible — visually siblings, same elevation treatment. It replaces the earlier circular mic button.
+- Contents, left to right: **expand/resize control** (tap cycles bar → sheet → tall sheet → bar; press-and-drag grows the sheet continuously under the pointer), a **middle area** (live status — animated waveform while listening, spinner while transcribing/thinking — or the latest reply's first line truncated; tapping it opens the sheet), the **record button** (tap to start/stop recording without expanding), and the **settings gear** (far right; opens the voice settings popover).
+- Timer state never appears here (it belongs to the timer pill).
 
-**Expanded state — pop-out panel:**
-- Bottom sheet over the reader content, ~40–60% viewport height, same bento card treatment (1px border, app radius, page-colored surface). Reader content stays visible above it.
+**Expanded state — resizable sheet:**
+- Bottom sheet over the reader content, same bento card treatment (1px border, app radius, page-colored surface). Reader content stays visible above it.
+- Sizing: tap the expand/resize control to cycle bar → half sheet (~55vh) → tall sheet (~85vh) → bar; drag the control (or the sheet's top-edge strip, desktop mouse) to resize continuously (clamped ~30–90vh). The custom height and the collapsed/expanded form persist across opens (per-device).
 - Collapse affordance (chevron/grab-handle) returns to the collapsed mic button; the conversation is not lost — collapsing preserves state, expanding restores it. Transcript and audio state persist for the whole cooking session.
 - **Chat / Steps tabs:** the sheet body is tabbed. *Chat* shows the transcript (below). *Steps* shows a single-step card — the current step in large type (with its image and timer chip, §3.3.2 states) — for hands-messy reading. **Swipe left/right** moves between steps and scrolls the reader to match; the card likewise follows whenever the reader scrolls (reader position is the single source of truth, shared with the session header's step indicator). Shake-to-advance (§3.3.3) drives the card unchanged. Swipe navigation never auto-starts a timer — the chip is tapped to start it; only shake auto-starts (§3.3.3). Prev/next chevron buttons give the no-touch/motion fallback (desktop). The input/status line is chat-tab-only; the steps card takes the full sheet.
 - Structure top-to-bottom:
   - **Session header:** recipe title + current step indicator ("Step 3 of 7"), live timer chips (synced with §3.3.2 state), collapse control.
-  - **Transcript:** scrolling multiturn thread — user messages (right-aligned, show transcribed speech; a small "editing" affordance on the just-transcribed text so a mis-transcription can be corrected before sending), assistant replies (left-aligned). Deterministic/rule-based answers (step reads, timer confirmations — development.md §14) render with a subtle icon distinguishing them from LLM answers; they are spoken aloud like any other reply.
+  - **Transcript:** scrolling multiturn thread — user messages (right-aligned, show transcribed speech), assistant replies (left-aligned). In "review" mode the just-transcribed text lands in the editable input so a mis-transcription can be corrected before sending (see "After recording" below). Deterministic/rule-based answers (step reads, timer confirmations — development.md §14) render with a subtle icon distinguishing them from LLM answers; they are spoken aloud like any other reply.
   - **Status line:** compact state indicator — listening (animated waveform), transcribing (spinner + partial transcript), thinking (dots), speaking (soundwave + "tap mic to interrupt"), quota-limited mode indicator.
 - **Push-to-talk:** tap-and-hold the mic button (or tap once to arm, tap again to stop). Release ends the capture window and transcription begins. This is the primary hands-free path; the text field is the always-available fallback.
-- **Interruption (v1):** while the assistant is speaking, tapping the mic cancels TTS playback immediately and arms the mic. No continuous listening during playback.
-- **Hands-free window (optional post-v1):** after each spoken reply, mic stays hot for a configurable few seconds before sleeping, so a quick follow-up needs no tap. Toggleable, default off.
+- **After recording — send or review:** a finished recording either **sends instantly** (transcribed on-device, routed, and dispatched with no further tap — the reply is spoken and shown, the bar's snippet carries it while collapsed) or lands in the **editable input** for correction before sending (the "review" mode — mis-transcriptions get fixed before they cost an LLM turn). This is a per-user setting (below); the input path remains available either way.
+- **Voice modes & settings:** a settings popover (gear on the bar's right end and in the expanded sheet header) holds:
+  - *Microphone mode* — **Standard**: the mic sleeps after each reply; tap record for every turn. **Always-on**: the mic keeps listening; a pause in speech ends the turn and sends it, the reply is spoken, and the mic picks back up when the reply finishes (it stays off while the assistant talks, so it never hears itself). Noise-only captures are discarded.
+  - *After recording* — Send instantly vs Review first (above).
+  - Settings and the remembered sheet height persist per-device.
+- **Interruption (v1):** while the assistant is speaking, tapping the mic cancels TTS playback immediately and arms the mic. No continuous listening during playback (in Always-on mode the mic resumes once the cancelled reply ends).
 
 **Spoken behavior:**
 - Replies are spoken aloud via on-device TTS as well as shown in the transcript. Timer completions are *spoken* in addition to the §3.3.2 pulse/vibration/sound ("Your 12-minute simmer is done — next step is adding the pasta.") when the panel is open (or the voice feature enabled).
