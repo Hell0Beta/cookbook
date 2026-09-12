@@ -64,6 +64,15 @@ export function RecipeReaderPage({
 
   const activeRecipeId = tabs.some((t) => t.id === activeId) ? activeId : recipeId;
 
+  // Occasion identity for the voice assistant's chat session (development.md
+  // §14.4): one transcript per meal occasion — tab switches keep it.
+  const occasionKey =
+    occasion === null
+      ? null
+      : occasion.kind === "upcoming"
+        ? "upcoming"
+        : `slot:${occasion.date}:${occasion.slot}`;
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["recipe", activeRecipeId],
     queryFn: () => api.getRecipe(activeRecipeId),
@@ -130,7 +139,12 @@ export function RecipeReaderPage({
       {data && (
         // Keyed by recipe so switching tabs swaps the whole block stack and
         // resets the editor to the new dish (design.md §3.3.1).
-        <RecipeEditor key={activeRecipeId} initial={data} recipeId={activeRecipeId} />
+        <RecipeEditor
+          key={activeRecipeId}
+          initial={data}
+          recipeId={activeRecipeId}
+          occasionKey={occasionKey}
+        />
       )}
     </div>
   );

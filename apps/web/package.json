@@ -7,14 +7,20 @@
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "vendor:stt": "node scripts/vendor-stt-model.mjs",
+    "vendor:tts": "node scripts/vendor-tts-model.mjs",
+    "vendor:models": "node scripts/vendor-stt-model.mjs && node scripts/vendor-tts-model.mjs",
+    "postinstall": "node scripts/vendor-tts-model.mjs"
   },
   "dependencies": {
     "@cookbook/shared": "workspace:*",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "@huggingface/transformers": "^3.7.0",
     "@tanstack/react-query": "^5.62.11",
     "clsx": "^2.1.1",
+    "kokoro-js": "^1.2.1",
     "lucide-react": "^0.469.0",
     "next": "^15.1.3",
     "react": "^19.0.0",

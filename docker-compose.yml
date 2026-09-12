@@ -1,30 +1,75 @@
 # Cookbook — production-ish stack for the Windows test box now, the Linux
 # homeserver later (development.md §0: SQLite + local files, no Redis/S3).
-# Tailscale Serve on the HOST is the only entry point (443 → web, 8443 → api),
-# so ports are published on loopback only.
+# A tailscale/tailscale SIDECAR container is the only entry point: web and api
+# share its network namespace (network_mode: "service:tailscale"), and its
+# serve.json maps 443 -> web, 8443 -> api on https://cookbook.dog-taipan.ts.net
+# (deploy/serve.json; tailnet-only, no Funnel). Ports are published on the
+# tailscale service, loopback only, so host-side smoke tests (curl
+# 127.0.0.1:3001) and the dev workflow keep working.
 #
-# First run: copy apps/api/.env.example → .env.docker and fill in
-# SESSION_SECRET / OPENROUTER_API_KEY; set WEB_ORIGIN to the tailnet URL once
-# Tailscale Serve is up. Rebuild web with NEXT_PUBLIC_API_URL when the public
-# URL is known (it's inlined at build time).
+# First run: copy .env.example -> .env and fill in TS_AUTHKEY (admin console ->
+# Settings -> Keys), SESSION_SECRET / OPENROUTER_API_KEY. WEB_ORIGIN and
+# NEXT_PUBLIC_API_URL are preset to the cookbook tailnet URLs — rebuild web if
+# you change them (NEXT_PUBLIC_* is inlined at build time).
+#
+# Pinned project name: the CI runner checks the repo out to its own work
+# directory — without this, compose would derive the project (and volume)
+# names from whatever folder it runs in, and the runner would spin up a
+# SECOND stack with empty volumes instead of updating this one.
+name: cookbook
 
 services:
+  tailscale:
+    # Sidecar proxy (docs/deploy.md "Tailscale: fixed URL + HTTPS"). Registers
+    # as a NEW machine named "cookbook" (separate from the Windows host's
+    # "laptop" node). TS_AUTHKEY lives in .env — never in this file.
+    image: tailscale/tailscale:latest
+    container_name: cookbook-tailscale
+    hostname: cookbook
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      # Ephemeral+reusable key from the admin console (Settings -> Keys);
+      # rotate it there if it was ever exposed in plaintext.
+      TS_AUTHKEY: ${TS_AUTHKEY:?set TS_AUTHKEY in .env (admin console -> Settings -> Keys)}
+      # State dir must be persistent or the node re-authenticates (and a new
+      # node is created) on every container restart.
+      TS_STATE_DIR: /var/lib/tailscale
+      # Applied once the node is up: HTTPS 443 -> web, 8443 -> api.
+      TS_SERVE_CONFIG: /config/serve.json
+      # Book the static hostname; container_name pins the Docker name.
+      TS_HOSTNAME: cookbook
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      # Serve config with the hardcoded cert domain (deploy/serve.json).
+      - ./deploy:/config:ro
+    ports:
+      # Loopback-only publish of the app ports that now live in THIS
+      # container's netns — the smoke-test / dev-coexistence ports from
+      # docs/deploy.md "Notes" (dev `pnpm dev` shares 3000/3001 with these).
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3001"
+    restart: unless-stopped
+
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    # Shares the tailscale sidecar's network namespace — reach 127.0.0.1 in
+    # serve.json's Proxy targets, and no ports: block of its own.
+    network_mode: "service:tailscale"
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3001:3001"
     environment:
       # Absolute path inside the container — the schema's file:../data default
       # resolves against prisma/, a dev-cwd quirk that doesn't apply here.
       DATABASE_URL: file:/data/cookbook.db
       DATA_DIR: /data
       PORT: "3001"
-      # Hostname origins (cookbook.<tailnet>.ts.net) don't match the
-      # private-IP CORS rule — they must be listed explicitly.
-      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      # Tailnet origin of the sidecar's serve domain — hostname origins
+      # (cookbook.<tailnet>.ts.net) don't match the private-IP CORS rule, so
+      # it must be listed explicitly.
+      WEB_ORIGIN: ${WEB_ORIGIN:-https://cookbook.dog-taipan.ts.net}
       SESSION_SECRET: ${SESSION_SECRET:-change-me}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-nvidia/nemotron-3.5-lightning:free}
@@ -43,12 +88,14 @@ services:
         # Empty default → api.ts falls back to ${browser-hostname}:3001.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3000:3000"
+    # Shares the tailscale sidecar's network namespace (see api service).
+    network_mode: "service:tailscale"
     environment:
       PORT: "3000"
     depends_on:
+      - tailscale
       - api
 
 volumes:
   cookbook-data:
+  tailscale-state:

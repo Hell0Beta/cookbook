@@ -44,8 +44,9 @@ import {
 } from "@/components/blocks/block-views";
 import { CoverPickerModal, RecipeCover } from "@/components/cover-picker";
 import { QuickAddModal } from "@/components/quick-add-modal";
-import { useTimerStore } from "@/components/timer/timer-store";
+import { ChatPanel } from "@/components/chat/chat-panel";
 import { requestMotionPermission, useShakeToAdvance } from "@/components/timer/use-shake-to-advance";
+import { currentReaderStep, revealStep } from "@/lib/step-navigation";
 
 let blockIdCounter = 0;
 const newBlockId = () => `local-${Date.now()}-${blockIdCounter++}`;
@@ -53,9 +54,11 @@ const newBlockId = () => `local-${Date.now()}-${blockIdCounter++}`;
 export function RecipeEditor({
   initial,
   recipeId,
+  occasionKey,
 }: {
   initial: RecipeBlocks;
   recipeId?: string; // absent → create mode
+  occasionKey?: string | null; // meal-occasion identity for the chat session (§14.4)
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -224,40 +227,16 @@ export function RecipeEditor({
   // hook itself ignores events while the tab is backgrounded.
 
   const advanceStep = () => {
+    if (!recipeId) return;
     const steps = numbered.filter((b): b is StepBlock => b.type === "step");
-    if (steps.length === 0) return;
-    // "Current" = the last step at/above the viewport midpoint, so a shake
-    // continues from wherever the reader is scrolled.
-    const mid = window.innerHeight / 2;
-    let currentIdx = -1;
-    steps.forEach((s, i) => {
-      const el = document.getElementById(`step-${s.id}`);
-      if (el && el.getBoundingClientRect().top <= mid) currentIdx = i;
-    });
+    const current = currentReaderStep(steps);
+    const currentIdx = current ? steps.indexOf(current) : -1;
     if (currentIdx === steps.length - 1) {
       toast.info("That's the last step");
       return;
     }
-    const next = steps[currentIdx + 1]!;
-    document
-      .getElementById(`step-${next.id}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    // Auto-start the step's timer unless one already lives for it (§3.3.3).
-    if (
-      recipeId &&
-      next.duration_minutes &&
-      next.duration_minutes > 0 &&
-      !useTimerStore.getState().get(next.id)
-    ) {
-      useTimerStore.getState().start({
-        stepId: next.id,
-        recipeId,
-        recipeTitle: title,
-        stepNumber: next.step_number,
-        snippet: next.instruction_text.slice(0, 60),
-        totalSeconds: next.duration_minutes * 60,
-      });
-    }
+    const next = steps[currentIdx + 1];
+    if (next) revealStep(next, { recipeId, recipeTitle: title, startTimer: true });
   };
 
   useShakeToAdvance(advanceStep, shakeOn && !editable && !!recipeId);
@@ -465,6 +444,21 @@ export function RecipeEditor({
             queryClient.invalidateQueries({ queryKey: ["recipes"] });
             router.push("/recipes");
           }}
+        />
+      )}
+
+      {/* Voice assistant panel — read (cooking) mode only (design.md §3.3.4,
+          development.md §14). One transcript per occasion; context (current
+          step, timers, servings) is reported from this editor's state. */}
+      {recipeId && !editable && (
+        <ChatPanel
+          recipeId={recipeId}
+          recipeTitle={title}
+          steps={numbered.filter((b): b is StepBlock => b.type === "step")}
+          ingredients={numbered.filter((b): b is IngredientBlock => b.type === "ingredient")}
+          baseServings={baseServings}
+          servings={displayServings}
+          occasionKey={occasionKey ?? null}
         />
       )}
     </div>

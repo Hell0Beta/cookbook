@@ -286,6 +286,7 @@ Two-tier approach:
 
 ```
 POST   /auth/signup | /auth/login        # username-only (§0); returns signed session cookie
+POST   /auth/logout                     # clears the session cookie (Profile screen)
 GET    /users/me
 PUT    /users/me/diet-profile
 
@@ -377,7 +378,7 @@ UX spec: design.md §3.3.4 (panel states, push-to-talk, spoken behavior, session
 - **Vendoring:** all model + runtime artifacts (ONNX weights, onnxruntime-web `.wasm` binaries) are vendored at build time under `apps/web/public/models/` and served from the app's own origin; transformers.js must be configured with local model paths and remote fetching disabled (its default is the HuggingFace hub — that would be a runtime download, §0 violation). Zero new outbound calls; §0 unchanged.
 - **Latency expectation:** single-digit seconds per short push-to-talk clip on mid-range phones (verify on real devices during Phase 11 — benchmark figures for WASM whisper are anecdotal, and cross-origin-isolation requirements affect them; adjust model size from the measurement, not from published numbers).
 - **COOP/COEP caveat:** multithreaded WASM (SharedArrayBuffer) needs cross-origin isolation, but `Cross-Origin-Embedder-Policy: require-corp` breaks the API-origin `<img>` loads (recipe covers) unless the API sends `Cross-Origin-Resource-Policy` headers. Prefer `credentialless` COEP or verify a workaround before enabling threads; single-threaded WASM is the acceptable fallback.
-- **TTS:** browser SpeechSynthesis — local, free, and available even at LLM quota exhaustion. Voice/rate selection is frontend concern; pick a sensible default, settings later.
+- **TTS:** primary engine is **Kokoro-82M** (Apache-licensed, 82 M params) via `kokoro-js` in a dedicated Web Worker — natural speech, consistent across devices, fully local (q8 ONNX ~92 MB + voice embeddings, vendored under `apps/web/public/models/Kokoro-82M-v1.0-ONNX/` by `pnpm vendor:tts`, which also runs on `postinstall` so models are fetched at install/build time). Kokoro-js hardcodes a HuggingFace voice URL — `tts-worker.ts` pre-populates the `"kokoro-voices"` Cache API cache from the app's own origin so that fetch never fires (§0). The phonemizer dependency (espeak-ng) is asm.js embedded in the bundle — no network. **Fallback:** browser SpeechSynthesis while the model loads or if it fails to load — local, free, available even at LLM quota exhaustion. Default voice `af_heart`; settings later.
 
 ### 14.2 Intent router — rule-based first (quota discipline)
 

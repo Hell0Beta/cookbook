@@ -7,3 +7,5 @@ export * from "./meal-plan.js";
 export * from "./youtube.js";
 export * from "./search.js";
 export * from "./recommendations.js";
+export * from "./chat.js";
+export * from "./chat-router.js";

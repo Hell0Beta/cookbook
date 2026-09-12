@@ -5,4 +5,12 @@ allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
   esbuild: true
+  onnxruntime-node: false
   prisma: true
+  protobufjs: false
+  # sharp/onnxruntime-node/protobufjs arrived with @huggingface/transformers
+  # (Phase 11 STT); their native build scripts are deliberately NOT run — the
+  # STT worker uses onnxruntime-web (browser WASM), never onnxruntime-node,
+  # and sharp is only needed for next/image, which this app doesn't use.
+  # Flip sharp to true if next/image ever lands.
+  sharp: false

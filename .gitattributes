@@ -1,0 +1,5 @@
+# Shell scripts must stay LF everywhere. A Windows checkout with
+# core.autocrlf=true rewrites them to CRLF, which breaks the shebang
+# inside the Linux images (apps/api/docker-entrypoint.sh exec'd by the
+# container runtime: "no such file or directory").
+*.sh text eol=lf

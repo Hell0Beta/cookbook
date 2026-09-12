@@ -1,0 +1,71 @@
+# Push-to-main deploy (docs/deploy.md "CI/CD: push-to-main deploys").
+#
+# Runs on the SELF-HOSTED runner installed on the deploy box — builds happen
+# locally so images never cross the (metered) WAN; only the git delta does.
+#
+# SECURITY (public repo + self-hosted runner): this workflow must NEVER
+# trigger on pull_request / pull_request_target — a fork PR would run
+# arbitrary code on the deploy box. Push to main requires write access
+# (owner only). Don't add other workflows with PR triggers while the runner
+# is registered.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  # Never cancel a deploy mid-flight; rapid pushes queue up instead.
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Custom label, not bare self-hosted — other repos' runners on the same
+    # box must not pick this up.
+    runs-on: [self-hosted, cookbook]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight
+        shell: bash
+        run: |
+          docker info >/dev/null 2>&1 || { echo "Docker engine not running — start Docker Desktop"; exit 1; }
+          [ -n "$COOKBOOK_ENV_FILE" ] || { echo "COOKBOOK_ENV_FILE not set — add it to the runner's .env (docs/deploy.md)"; exit 1; }
+          [ -f "$COOKBOOK_ENV_FILE" ] || { echo "env file missing: $COOKBOOK_ENV_FILE"; exit 1; }
+          command -v pnpm >/dev/null || { echo "pnpm not on the service account's PATH (docs/deploy.md troubleshooting)"; exit 1; }
+
+      - name: Typecheck
+        # Uses the shared global pnpm store (hard links — no re-download).
+        # The docker builds also type-check; this step just fails faster.
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm typecheck
+
+      - name: Build images
+        # If this fails, the deploy step below never runs and the old
+        # containers keep serving.
+        shell: bash
+        run: docker compose --env-file "$COOKBOOK_ENV_FILE" build
+
+      - name: Deploy (recreates only changed containers)
+        shell: bash
+        run: docker compose --env-file "$COOKBOOK_ENV_FILE" up -d
+
+      - name: Smoke test
+        # Loopback-published ports on the tailscale sidecar (compose file).
+        # Poll instead of a fixed sleep — first boot runs `prisma db push`
+        # against a fresh volume and can take longer than a few seconds.
+        shell: bash
+        run: |
+          code=""
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 http://127.0.0.1:3001/tags || true)
+            [ "$code" = "401" ] && break
+            sleep 2
+          done
+          [ "$code" = "401" ] || { echo "api returned $code (expected 401)"; exit 1; }
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/)
+          [ "$code" = "200" ] || { echo "web returned $code (expected 200)"; exit 1; }

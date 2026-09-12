@@ -1,8 +1,8 @@
-// POST /auth/signup | /auth/login — username-only (development.md §0, §11).
+// POST /auth/signup | /auth/login | /auth/logout — username-only (development.md §0, §11).
 import { Router } from "express";
 import { LoginInput, SignupInput } from "@cookbook/shared";
 import { prisma } from "../db.js";
-import { createSessionToken, setSessionCookie } from "../auth/session.js";
+import { clearSessionCookie, createSessionToken, setSessionCookie } from "../auth/session.js";
 import { ApiError } from "../middleware/error.js";
 
 export const authRouter = Router();
@@ -49,4 +49,13 @@ authRouter.post("/login", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// POST /auth/logout — clear the session cookie. Unauthenticated-tolerant:
+// clearing an absent cookie is a no-op, so no requireAuth gate.
+authRouter.post("/logout", (req, res) => {
+  
+  clearSessionCookie(res);
+  
+  res.json({ ok: true });
 });
