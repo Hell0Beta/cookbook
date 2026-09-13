@@ -2,8 +2,9 @@
 // in a dedicated worker so model load + synthesis never block the UI thread.
 // All model artifacts are vendored under /models/ and served from this origin
 // — env.allowRemoteModels=false means the worker can NEVER fall back to the
-// HuggingFace hub at runtime (§0 offline-first). Browser speechSynthesis on
-// the main thread (lib/tts.ts) is the fallback while this loads / if it fails.
+// HuggingFace hub at runtime (§0 offline-first). Kokoro is the ONLY engine
+// (owner request 2026-09-12): lib/tts.ts queues utterances while this loads
+// and stays silent if it fails — never the browser's platform voice.
 //
 // Voice embeddings: kokoro-js fetches voices/*.bin from a HARDCODED HF hub
 // URL, checking the "kokoro-voices" Cache API cache first. We pre-populate
@@ -38,6 +39,13 @@ const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
 // use exactly this URL for the interception to hit.
 const VOICE_REMOTE_BASE = `https://huggingface.co/${MODEL_ID}/resolve/main/voices/`;
 const VENDORED_VOICES = ["af_heart", "af_bella", "af_nicole", "am_michael", "am_puck"];
+// The LOCAL id transformers.js resolves (env.localModelPath + id). The
+// vendored layout is public/models/Kokoro-82M-v1.0-ONNX/ — a BARE id, same
+// convention as the STT worker's "whisper-tiny.en". Passing the full repo
+// id made transformers request /models/onnx-community/... which 404s:
+// Kokoro never loaded, and the (since removed) SpeechSynthesis fallback
+// masked the failure with the browser voice (owner bug report 2026-09-12).
+const LOCAL_MODEL_ID = "Kokoro-82M-v1.0-ONNX";
 
 /** Pre-populate the "kokoro-voices" cache from our own origin so the voice
  *  loader's remote fetch never fires. Returns false when the Cache API or the
@@ -75,7 +83,7 @@ async function ensureLoaded() {
         if (!(await primeVoiceCache())) {
           throw new Error("Voice files unavailable — check the vendored /models/ directory");
         }
-        tts = await KokoroTTS.from_pretrained(MODEL_ID, {
+        tts = await KokoroTTS.from_pretrained(LOCAL_MODEL_ID, {
           dtype: "q8", // quantized per development.md §14.1 (92 MB, q8 suffix naming)
           // device stays default: WASM — WebGPU needs fp32, a 325 MB download
         });

@@ -1,12 +1,13 @@
 "use client";
 
-// On-device TTS — development.md §14.1: primary engine is the vendored
-// Kokoro-82M model (tts-worker.ts, served from /models/ — natural speech,
-// consistent across devices); browser SpeechSynthesis is the FALLBACK while
-// the model loads or if it fails to load. Speech is a progressive
-// enhancement: a failed speak() is silent, the transcript still carries the
-// reply. All browser-API branches are try/catch (unsupported browsers /
-// autoplay policies must not crash, same stance as the timer alert).
+// On-device TTS — development.md §14.1: the Kokoro-82M model (tts-worker.ts,
+// served from /models/) is the ONLY engine (owner request 2026-09-12: always
+// the Kokoro female voice, never the browser's platform speech — no voice
+// overrides). While the model loads, utterances queue and flush when it's
+// ready; if it fails to load, replies are silent and the transcript carries
+// them. Speech is a progressive enhancement: a failed speak() never throws.
+// All browser-API branches are try/catch (autoplay policies must not crash,
+// same stance as the timer alert).
 
 let enabled = true;
 let worker: Worker | null = null;
@@ -18,6 +19,11 @@ let audioCtx: AudioContext | null = null;
 // development.md §14: the mic re-arms when the reply finishes speaking).
 // Fire-once: every path nulls it before calling.
 let currentOnEnd: (() => void) | null = null;
+// Utterance waiting for the model to finish loading — flushed on "ready".
+// One slot: a newer reply replaces an older queued one (one reply at a
+// time). The replaced reply's onEnd is dropped deliberately — the newer
+// utterance's own onEnd resumes the mic, so the loop can't stall.
+let pending: { text: string; onEnd?: () => void } | null = null;
 
 function fireOnEnd() {
   const cb = currentOnEnd;
@@ -38,23 +44,33 @@ function ensureWorker(): Worker | null {
     w.onmessage = (e: MessageEvent) => {
       const msg = e.data as { type: string; stage?: string; samples?: Float32Array; sample_rate?: number };
       if (msg.type === "status") {
-        if (msg.stage === "ready") kokoroReady = true;
-        else if (msg.stage === "error") {
+        if (msg.stage === "ready") {
+          kokoroReady = true;
+          flushPending();
+        } else if (msg.stage === "error") {
           kokoroReady = false;
-          kokoroFailed = true; // permanently fall back — the model is one-time setup
+          kokoroFailed = true; // permanently silent — the model is one-time setup
           w.terminate();
           worker = null;
-          // A speak() in flight will never produce audio — release its waiter.
+          // Queued/waiting utterances will never be spoken — release their
+          // waiters so the always-on mic isn't stalled forever.
+          const queued = pending;
+          pending = null;
           fireOnEnd();
+          queued?.onEnd?.();
         }
       } else if (msg.type === "audio" && msg.samples && msg.sample_rate) {
         playPcm(msg.samples, msg.sample_rate);
       }
     };
     w.onerror = () => {
-      // Worker script/module failed to start (old browser, CSP) — fall back.
+      // Worker script/module failed to start (old browser, CSP) — silent mode.
       kokoroFailed = true;
       worker = null;
+      const queued = pending;
+      pending = null;
+      fireOnEnd();
+      queued?.onEnd?.();
     };
     w.postMessage({ type: "load" });
     worker = w;
@@ -63,6 +79,18 @@ function ensureWorker(): Worker | null {
     kokoroFailed = true;
     return null;
   }
+}
+
+function flushPending() {
+  if (!pending || !worker) return;
+  const { text, onEnd } = pending;
+  pending = null;
+  if (!enabled) {
+    onEnd?.(); // muted while queued — drop it, release the waiter
+    return;
+  }
+  currentOnEnd = onEnd ?? null;
+  worker.postMessage({ type: "speak", text });
 }
 
 /** Play worker-produced PCM. Resampling to the context rate is the Web Audio
@@ -108,106 +136,43 @@ export function setSpeechEnabled(on: boolean) {
   if (!on) cancelSpeech();
 }
 
-export function speechEnabled(): boolean {
-  return enabled;
-}
-
 /** Stop any in-flight speech — design.md §3.3.4 interruption v1 (tap mic). */
 export function cancelSpeech() {
   stopPlayback();
-  try {
-    window.speechSynthesis?.cancel();
-  } catch {
-    // speechSynthesis unavailable — nothing to cancel
-  }
   // An interrupted reply still counts as "done speaking" — the always-on mic
   // resumes instead of waiting on playback that will never end.
   fireOnEnd();
 }
 
 export function isSpeaking(): boolean {
-  if (currentSource) return true;
-  try {
-    return window.speechSynthesis?.speaking ?? false;
-  } catch {
-    return false;
-  }
+  return currentSource !== null;
 }
 
-// ── Fallback: browser SpeechSynthesis ───────────────────────────────────────
-// Kokoro needs a one-time model load (a few seconds); until it's ready — and
-// permanently if it failed — replies are spoken by the platform's engine.
-
-// Prefer the neural/online voices (marked "Natural"/"Neural"/"Google"; the
-// platform default on Windows is often a legacy SAPI voice), else the first
-// English voice, else whatever exists. Voice selection is a nice-to-have,
-// never a failure.
-const NATURAL = /natural|neural|google/i;
-let cachedVoice: SpeechSynthesisVoice | null | undefined;
-
-function defaultVoice(): SpeechSynthesisVoice | null {
-  if (cachedVoice !== undefined) return cachedVoice;
-  try {
-    const voices = window.speechSynthesis?.getVoices() ?? [];
-    cachedVoice =
-      voices.find((v) => NATURAL.test(v.name) && v.lang.startsWith("en")) ??
-      voices.find((v) => v.default && v.lang.startsWith("en")) ??
-      voices.find((v) => v.lang.startsWith("en")) ??
-      voices[0] ??
-      null;
-  } catch {
-    cachedVoice = null;
-  }
-  return cachedVoice;
-}
-
-// getVoices() is async-populated in some browsers — prime the cache on the
-// voiceschanged event so the first speak() isn't stuck with an empty list.
-try {
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    window.speechSynthesis.addEventListener("voiceschanged", () => {
-      cachedVoice = undefined;
-      defaultVoice();
-    });
-  }
-} catch {
-  // events unsupported — the per-speak fallback still picks a voice
-}
-
-function speakFallback(text: string) {
-  try {
-    const synth = window.speechSynthesis;
-    if (!synth) {
-      fireOnEnd(); // nothing will speak — release the waiter
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(text);
-    const voice = defaultVoice();
-    if (voice) utter.voice = voice;
-    utter.onend = fireOnEnd;
-    utter.onerror = fireOnEnd;
-    synth.speak(utter);
-  } catch {
-    // TTS unavailable — the transcript carries the reply, release the waiter
-    fireOnEnd();
-  }
-}
-
-/** Speak a reply aloud. Fire-and-forget; never throws. `onEnd` fires once
- * when playback finishes OR is interrupted/cancelled — the always-on mic
- * mode uses it to know when to resume listening (development.md §14). */
+/** Speak a reply aloud — Kokoro only, never the browser's platform voice.
+ *  Queues while the model loads; if it failed, the reply is silent.
+ *  Fire-and-forget; never throws. `onEnd` fires once when playback finishes
+ *  OR is interrupted/cancelled/dropped — the always-on mic mode uses it to
+ *  know when to resume listening (development.md §14). */
 export function speak(text: string, onEnd?: () => void) {
   if (!enabled || !text.trim()) {
     onEnd?.(); // muted/empty reply — still counts as spoken for sequencing
     return;
   }
-  cancelSpeech(); // one reply at a time — a new reply interrupts the old
-  currentOnEnd = onEnd ?? null;
-  const w = ensureWorker();
-  if (kokoroReady && w) {
-    w.postMessage({ type: "speak", text });
-  } else {
-    // Model still loading (or failed) — don't hold the reply hostage.
-    speakFallback(text);
+  if (kokoroFailed) {
+    onEnd?.(); // model unusable — the transcript carries the reply
+    return;
   }
+  cancelSpeech(); // one reply at a time — a new reply interrupts the old
+  if (!kokoroReady) {
+    pending = { text, onEnd }; // wait for Kokoro — no browser voice fallback
+    ensureWorker();
+    return;
+  }
+  const w = ensureWorker();
+  if (!w) {
+    onEnd?.();
+    return;
+  }
+  currentOnEnd = onEnd ?? null;
+  w.postMessage({ type: "speak", text });
 }

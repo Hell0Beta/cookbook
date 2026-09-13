@@ -24,6 +24,7 @@ const DISCOVER_STALE_MS = 5 * 60_000;
 const DISCOVER_OPEN_KEY = "discover-open";
 
 function readStoredOpen(): boolean {
+  if (typeof window === "undefined") return false; // SSR — no localStorage
   try {
     return localStorage.getItem(DISCOVER_OPEN_KEY) === "1";
   } catch {

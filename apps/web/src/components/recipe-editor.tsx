@@ -72,6 +72,7 @@ export function RecipeEditor({
   const [editable, setEditable] = useState(!recipeId); // new recipes start in edit mode
   // Shake-to-advance toggle (§3.3.3) — opt-in, remembered per browser.
   const [shakeOn, setShakeOn] = useState(() => {
+    if (typeof window === "undefined") return false; // SSR — no localStorage
     try {
       return localStorage.getItem("cookbook:shakeToAdvance") === "on";
     } catch {

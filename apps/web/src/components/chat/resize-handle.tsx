@@ -2,11 +2,17 @@
 
 // Tap-vs-drag resize control — design.md §3.3.4 "assistant bar / sheet
 // resizing". One pointer surface does both: a press that moves less than
-// TAP_SLOP_PX is a tap (cycles sizes), anything further is a drag that
-// resizes the sheet continuously (the drag target is the pointer's height
-// from the viewport bottom, clamped). Pointer capture keeps the drag alive
-// outside the element; touch-none keeps touch drags from scrolling the
-// reader behind the sheet.
+// TAP_SLOP_PX is a tap (cycles sizes); anything further is a drag.
+//
+// Two drag modes:
+//  - self-managed (onResize): the handle stays mounted for the whole drag
+//    (the sheet's top-edge strip) and streams the pointer's clientY.
+//  - external takeover (onDragStart): fired once when the slop is crossed,
+//    for handles whose element may UNMOUNT mid-drag — the bar's control
+//    hands off to window-level listeners in the panel (the sheet form
+//    replaces the bar), which own the rest of the gesture.
+// Pointer capture keeps a self-managed drag alive outside the element;
+// touch-none keeps touch drags from scrolling the reader behind the sheet.
 import { useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,22 +21,20 @@ const TAP_SLOP_PX = 8;
 export const SHEET_HEIGHT_MIN_VH = 30;
 export const SHEET_HEIGHT_MAX_VH = 90;
 
-/** Viewport height (%) a sheet should occupy to put its top edge at clientY. */
-export function heightVhFromClientY(clientY: number): number {
-  const vh = ((window.innerHeight - clientY) / window.innerHeight) * 100;
-  return Math.min(SHEET_HEIGHT_MAX_VH, Math.max(SHEET_HEIGHT_MIN_VH, vh));
-}
-
 export function ResizeHandle({
   onTap,
   onResize,
+  onDragStart,
   ariaLabel,
   title,
   className,
   children,
 }: {
   onTap: () => void;
-  onResize: (vh: number) => void;
+  /** Self-managed mode: continuous resize, receives the pointer's clientY. */
+  onResize?: (clientY: number) => void;
+  /** External-takeover mode: fired once at drag start (see header). */
+  onDragStart?: (clientY: number) => void;
   ariaLabel: string;
   title?: string;
   className?: string;
@@ -53,8 +57,13 @@ export function ResizeHandle({
         return; // still within tap slop — not a drag yet
       }
       draggingRef.current = true;
+      if (onDragStart) {
+        onDragStart(e.clientY); // hand off — the panel owns the drag from here
+        return;
+      }
     }
-    onResize(heightVhFromClientY(e.clientY));
+    if (onDragStart) return; // already taken over
+    onResize?.(e.clientY);
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {

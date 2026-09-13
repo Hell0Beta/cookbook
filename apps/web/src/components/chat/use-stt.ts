@@ -35,7 +35,12 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
   const workerRef = useRef<Worker | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const cancelledRef = useRef(false);
+  // Cancel bookkeeping: `transcribing` tracks whether a turn is in the
+  // worker; cancel() sets `suppress` only when one is, and the next result
+  // consumes it — so a cancelled transcript can never leak into a freshly
+  // started recording (cancelledRef reset-at-arm had exactly that race).
+  const transcribingRef = useRef(false);
+  const suppressRef = useRef(false);
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
   const onMissRef = useRef(onMiss);
@@ -73,11 +78,18 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
           else if (msg.stage === "error") {
             setStatus("error");
             setError(msg.message ?? "Speech recognition failed");
+            transcribingRef.current = false;
+            suppressRef.current = false;
             haltContinuous();
           }
         } else if (msg.type === "result") {
           setStatus("idle");
-          if (cancelledRef.current) return;
+          transcribingRef.current = false;
+          if (suppressRef.current) {
+            // The turn was cancelled while transcribing — drop it, exactly once.
+            suppressRef.current = false;
+            return;
+          }
           if (msg.text) onResultRef.current(msg.text);
           else {
             // Noise-only clip: nothing to send. The always-on loop re-arms
@@ -128,7 +140,20 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
   const beginCapture = useCallback(async () => {
     if (capturing()) return; // a window is already open — never double-arm
     setError(null);
-    cancelledRef.current = false;
+    // getUserMedia only exists in secure contexts. On plain http (e.g. a
+    // LAN IP) the API is absent — NO permission prompt can ever appear, on
+    // mobile or desktop (same secure-context gating as shake-to-advance,
+    // docs/agents/frontend.md). Surface why instead of a generic "denied".
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatus("error");
+      setError(
+        typeof window !== "undefined" && !window.isSecureContext
+          ? "Microphone needs a secure connection — open the app over https or localhost (browsers block mic access on plain http)"
+          : "This browser doesn't support microphone access — you can still type",
+      );
+      haltContinuous();
+      return;
+    }
     const worker = ensureWorker();
     if (!worker) return;
     worker.postMessage({ type: "load" }); // arms the pipeline if not yet loaded
@@ -234,6 +259,29 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
     recorderRef.current = null;
   }, []);
 
+  /** Discard everything in flight — the open recording AND any turn already
+   *  handed to the worker (design.md §3.3.4 cancel affordance, next to the
+   *  record button). Nothing is sent; the mic goes fully off. */
+  const cancel = useCallback(() => {
+    if (transcribingRef.current) suppressRef.current = true; // drop that result
+    transcribingRef.current = false;
+    haltContinuous();
+    stopVad();
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.onstop = null; // skip the transcribe path entirely
+      try {
+        recorder.stop();
+      } catch {
+        // already inactive
+      }
+      recorder.stream.getTracks().forEach((t) => t.stop());
+    }
+    recorderRef.current = null;
+    chunksRef.current = [];
+    setStatus("idle");
+  }, [haltContinuous, stopVad]);
+
   /** Decode the captured clip to 16 kHz mono PCM and hand it to the worker. */
   const transcribe = async (worker: Worker) => {
     try {
@@ -243,6 +291,7 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
         return;
       }
       setStatus("transcribing");
+      transcribingRef.current = true;
       const arrayBuffer = await blob.arrayBuffer();
       const decodeCtx = new AudioContext();
       const decoded = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
@@ -263,10 +312,12 @@ export function useStt(onResult: (text: string) => void, onMiss?: () => void) {
       worker.postMessage({ type: "transcribe", audio: new Float32Array(pcm) });
     } catch {
       setStatus("error");
+      transcribingRef.current = false;
+      suppressRef.current = false;
       setError("Could not process that recording — try again");
       haltContinuous();
     }
   };
 
-  return { status, continuous, error, arm, stop, startContinuous, stopContinuous, resume };
+  return { status, continuous, error, arm, stop, cancel, startContinuous, stopContinuous, resume };
 }
