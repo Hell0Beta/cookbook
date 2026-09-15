@@ -12,5 +12,9 @@
     "app/**/*",
     "src/**/*",
     "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests"
   ]
 }

@@ -27,11 +27,13 @@ Source plan: mobile agent's approved build plan (2026-09-15). Check items off as
 - [x] Verified live: list params, since-filtering, delete→tombstone flow (2026-09-15)
 
 ## M3 — Local DB + sync engine
-- [ ] SQLite schema (stubs/content/images/meal-plan/grocery/favorites/mutation_queue/sync_meta)
-- [ ] Repository layer; screens read/write local-first
-- [ ] Sync engine: incremental pull, mutation-queue push, LWW conflicts, single-flight
-- [ ] Triggers: app start, NetInfo reconnect, foreground, pull-to-refresh
-- [ ] First-run full stub pull with progress UI (page_size=200)
+- [x] SQLite schema (stubs/content/mutation_queue/sync_meta — `src/db/schema.ts`, versioned migrations)
+- [x] Repository layer (`src/db/repositories/`); screens read/write local-first
+- [x] Sync engine (`src/sync/engine.ts`): pull-then-push, LWW conflicts (`src/sync/lww.ts`), single-flight
+- [x] Triggers: app start, offline→online transition, foreground (AppState), post-login, pull-to-refresh
+- [x] Engine call sequence verified live against dev API (pull, tombstones, favorites, content fetch)
+- [x] LWW pure functions unit-tested (6 tests, `tests/lww.test.ts`)
+- [ ] First-run progress UI (deferred to M4 — the library is small until the dataset import exists)
 
 ## M4 — Recipe library + reader
 - [ ] Bento-styled recipe list (cards, pull-to-refresh, swipe actions)

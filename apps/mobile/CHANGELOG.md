@@ -43,3 +43,15 @@ Living documentation — updated with every change to the mobile app. Each entry
 
 ### Verification
 - All 4 workspace typechecks pass; shared's 85 tests pass.
+
+## 2026-09-15 — M3: local database + sync engine (offline-first core)
+
+- **`src/db/schema.ts` + `src/db/client.ts`** — on-device SQLite (expo-sqlite, WAL mode, versioned migrations). Tables: `recipe_stubs` (list entries + sync columns), `recipe_content` (cached blocks — separate table so eviction can remove content while keeping the list entry), `mutation_queue` (ordered local edits), `sync_meta` (pull cursor, user id). What it does: the app's source of truth on the phone; everything renders from here, online or not.
+- **`src/db/repositories/` (recipes, mutations, meta)** — the only layer screens touch. Pull upserts preserve pending local edits (`dirty` rows keep local fields but advance the server timestamp — the conflict signal). Content staleness compares server timestamps only (no device-clock skew).
+- **`src/sync/engine.ts`** — pull-then-push sync. Pull: paginated stub pull (200/page), tombstone removal, favorites refresh, full-content fetch for the user's own recipes + favorites (dataset recipes stay stubs until opened — App Plan.txt). Push: FIFO mutation-queue replay; network errors stop and retry next trigger, 4xx drops with a logged reason, 404 = intent-satisfied. Triggers: app start, offline→online transition (the try-and-catch recovery from M1), app foreground, post-login, pull-to-refresh. Single-flight lock.
+- **`src/sync/lww.ts`** — last-write-wins as pure functions (tested, `tests/lww.test.ts`): no server change → push freely; server changed → later timestamp wins; losing local edits are dropped and *surfaced* (`conflicts` in the sync store), never silent. Cursor advances monotonically; cursors older than the server's 90-day tombstone horizon trigger a full pull so pruned tombstones can't be missed.
+- **Home screen is now real** — renders the local library from SQLite with a sync card (status, pending-change count, manual sync, pull-to-refresh). Empty states per design.md §5.
+- **Login now kicks the first sync** immediately after the session is stored.
+
+### Verified
+- 6/6 LWW unit tests; mobile typechecks (app + tests tsconfigs); Android bundle export compiles; the engine's exact call sequence tested live against the dev API (full pull, tombstones, favorites, content fetch).

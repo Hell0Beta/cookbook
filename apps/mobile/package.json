@@ -7,7 +7,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
@@ -40,6 +40,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "@types/react": "~19.2.0",
     "tsx": "^4.23.12",
     "typescript": "^6.0.3"

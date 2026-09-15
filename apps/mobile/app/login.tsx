@@ -33,9 +33,11 @@ export default function LoginScreen() {
         await api.signup(username.trim(), displayName.trim() || undefined);
       }
       // Re-probe connectivity now that we have a session (banner flips to
-      // online immediately rather than waiting for the next NetInfo event).
+      // online immediately rather than waiting for the next NetInfo event),
+      // then kick the first sync — the engine skips silently if still offline.
       const { recheckNow } = await import("@cookbook/mobile/lib/connectivity");
       await recheckNow();
+      void import("@cookbook/mobile/sync/engine").then(({ sync }) => sync());
       router.back();
     } catch (e) {
       if (e instanceof ApiRequestError) {

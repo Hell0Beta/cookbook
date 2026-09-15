@@ -2,6 +2,7 @@
 // mirroring apps/web/src/lib/api.ts. Login/signup go through rawRequest to
 // capture the set-cookie token; everything else uses request().
 import type {
+  DeletedRecipesResponse,
   DietProfileOut,
   DiscoverResponse,
   IngredientOption,
@@ -57,6 +58,9 @@ export const api = {
 
   listRecipes: (page = 1, pageSize = 24, since?: string) =>
     request<RecipeSearchPage>(`/recipes?page=${page}&page_size=${pageSize}${since ? `&since=${encodeURIComponent(since)}` : ""}`),
+  /** Tombstone ids deleted server-side since the timestamp (mobile sync). */
+  deleted: (since: string) =>
+    request<DeletedRecipesResponse>(`/recipes/deleted?since=${encodeURIComponent(since)}`),
   getRecipe: (id: string) => request<RecipeBlocks & { id: string }>(`/recipes/${id}`),
   createRecipe: (body: RecipeBlocks) =>
     request<RecipeBlocks & { id: string }>("/recipes", { method: "POST", body: JSON.stringify(body) }),
@@ -65,7 +69,7 @@ export const api = {
   deleteRecipe: (id: string) => request<void>(`/recipes/${id}`, { method: "DELETE" }),
   scaleRecipe: (id: string, servings: number) =>
     request<ScaledRecipe>(`/recipes/${id}/scale?servings=${servings}`),
-  favorites: () => request<{ items: RecipeSummary[] }>("/recipes/favorites"),
+  listFavorites: () => request<RecipeSearchResult[]>("/recipes/favorites"),
   setFavorite: (id: string, on: boolean) =>
     request(`/recipes/${id}/favorite`, on ? { method: "POST" } : { method: "DELETE" }),
   markCooked: (id: string) => request<void>(`/recipes/${id}/cooked`, { method: "POST" }),

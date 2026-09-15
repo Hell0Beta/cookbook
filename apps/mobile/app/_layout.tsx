@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNetworkStore } from "@cookbook/mobile/stores/network";
 import { initNetworkWatch } from "@cookbook/mobile/lib/connectivity";
+import { initSyncTriggers } from "@cookbook/mobile/sync/engine";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +23,7 @@ export default function RootLayout() {
   const isOnline = useNetworkStore((s) => s.isOnline);
 
   useEffect(() => initNetworkWatch(), []);
+  useEffect(() => initSyncTriggers(), []);
 
   return (
     <SafeAreaProvider>
