@@ -2,6 +2,7 @@
 // design.md §4.4 ("avoid 1.333 eggs").
 import Fraction from "fraction.js";
 import type { Unit } from "./entities.js";
+import { z } from "zod";
 
 const VOLUME_UNITS: ReadonlySet<Unit> = new Set(["tsp", "tbsp", "cup", "ml", "l"]);
 const US_VOLUME_UNITS: ReadonlySet<Unit> = new Set(["tsp", "tbsp", "cup"]);
@@ -13,6 +14,23 @@ export interface ScaledQuantity {
   display: string; // "1½", "2", "~2–3", "0.5"
   approximate: boolean; // true when rounding was lossy enough to warrant a flag
 }
+
+/** GET /recipes/:id/scale response — shared so web + mobile declare it once. */
+export const ScaledRecipe = z.object({
+  recipe_id: z.string(),
+  base_servings: z.number().int(),
+  target_servings: z.number().int(),
+  ingredients: z.array(
+    z.object({
+      raw_text: z.string(),
+      quantity: z.number().nullable(),
+      display: z.string(),
+      approximate: z.boolean(),
+      unit: z.string().nullable(),
+    }),
+  ),
+});
+export type ScaledRecipe = z.infer<typeof ScaledRecipe>;
 
 /** Unicode fraction rendering for the common kitchen fractions (design.md §4.4). */
 const FRACTION_GLYPHS: Record<string, string> = {

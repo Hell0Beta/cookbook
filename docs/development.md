@@ -295,6 +295,12 @@ GET    /recipes/:id
 PUT    /recipes/:id
 DELETE /recipes/:id
 GET    /recipes?tags=&q=&ingredients=
+# Mobile sync additions (2026-09-15): list items carry updated_at + user_id;
+# ?since=<ISO> filters to recipes changed since the cursor (incremental pull);
+# ?page_size= up to 200 (search UI keeps the 24 default). ?since= combines
+# with q=/tags= but is ignored in ingredient-scoring mode.
+GET    /recipes/deleted?since=      # tombstone ids deleted server-side (mobile sync);
+                                    # entries pruned after 90 days
 
 POST   /recipes/import/youtube      # { url }
 POST   /recipes/import/url          # { url } (web import)

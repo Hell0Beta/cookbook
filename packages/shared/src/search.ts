@@ -89,9 +89,38 @@ export const RecipeSearchResult = z.object({
   base_servings: z.number().int().positive(),
   total_time_minutes: z.number().int().nullable(),
   source_type: z.string(),
+  // Mobile sync (updated_at + user_id added 2026-09-15): updated_at drives
+  // incremental pull (last-write-wins conflicts); user_id distinguishes
+  // "mine" (sync full content) from shared dataset stubs.
+  updated_at: z.string(),
+  user_id: z.string().nullable(),
   match_score: z.number().min(0).max(1).optional(),
   matched_main: z.number().int().min(0).optional(),
   total_main: z.number().int().min(0).optional(),
   missing_ingredients: z.array(MissingIngredient).optional(),
 });
 export type RecipeSearchResult = z.infer<typeof RecipeSearchResult>;
+
+/**
+ * GET /recipes paginated envelope (development.md §10 — 24/page default).
+ * Shared so web + mobile declare the shape once (was web-local).
+ */
+export const RecipeSearchPage = z.object({
+  items: z.array(RecipeSearchResult),
+  total: z.number().int(),
+  page: z.number().int(),
+  page_size: z.number().int(),
+  has_more: z.boolean(),
+});
+export type RecipeSearchPage = z.infer<typeof RecipeSearchPage>;
+
+/**
+ * GET /recipes/deleted?since= — tombstone ids for recipes deleted server-side
+ * since the timestamp, so mobile sync removes them locally (development.md
+ * §11 mobile sync additions). Deleted server-side = deleted on-device.
+ */
+export const DeletedRecipesResponse = z.object({
+  ids: z.array(z.string()),
+  since: z.string(),
+});
+export type DeletedRecipesResponse = z.infer<typeof DeletedRecipesResponse>;

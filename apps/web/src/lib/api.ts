@@ -1,6 +1,6 @@
 // Typed API client — all requests carry the session cookie (username-only auth,
 // development.md §0). Errors normalize to the { error, message? } convention (§11).
-import type { ApiError, ChatLlmTurnResponse, ChatLogInput, ChatMessage, ChatMessageInput, ChatSessionResponse, CreateChatSessionInput, DietProfileOut, DiscoverResponse, ImportSearchResult, IngredientOption, InternalRecommendationsResponse, MealPlanEntryOut, QuickAddInput, RecipeBlocks, RecipeSearchResult, TagNode, YoutubeExtractionDraft } from "@cookbook/shared";
+import type { ApiError, ChatLlmTurnResponse, ChatLogInput, ChatMessage, ChatMessageInput, ChatSessionResponse, CreateChatSessionInput, DietProfileOut, DiscoverResponse, ImportSearchResult, IngredientOption, InternalRecommendationsResponse, MealPlanEntryOut, QuickAddInput, RecipeBlocks, RecipeSearchPage, RecipeSearchResult, ScaledRecipe, TagNode, YoutubeExtractionDraft } from "@cookbook/shared";
 
 // API base URL. Default follows the browser's hostname so localhost and LAN
 // (phone) browsing both work — the session cookie is host-scoped, so a
@@ -234,37 +234,16 @@ export const api = {
     }),
 };
 
-// GET /recipes list item (lighter than the full block stack).
-export interface RecipeSummary {
-  id: string;
-  title: string;
-  hero_image_url: string | null;
-  base_servings: number;
-  total_time_minutes: number | null;
-  source_type: string;
-}
+// GET /recipes list item (lighter than the full block stack). Field shapes
+// declared once in @cookbook/shared; this is the web-local subset alias.
+export type RecipeSummary = Pick<
+  RecipeSearchResult,
+  "id" | "title" | "hero_image_url" | "base_servings" | "total_time_minutes" | "source_type"
+>;
 
-// GET /recipes paginated envelope (search screen).
-export interface RecipeSearchPage {
-  items: RecipeSearchResult[];
-  total: number;
-  page: number;
-  page_size: number;
-  has_more: boolean;
-}
-
-export interface ScaledRecipe {
-  recipe_id: string;
-  base_servings: number;
-  target_servings: number;
-  ingredients: {
-    raw_text: string;
-    quantity: number | null;
-    display: string;
-    approximate: boolean;
-    unit: string | null;
-  }[];
-}
+// RecipeSearchPage + ScaledRecipe envelopes now live in @cookbook/shared
+// (search.ts / scaling.ts) — re-exported for existing @/lib/api consumers.
+export type { RecipeSearchPage, ScaledRecipe } from "@cookbook/shared";
 
 // GET/POST /grocery-lists shapes (mirrors @cookbook/shared GroceryListOut)
 export interface GroceryListItem {
