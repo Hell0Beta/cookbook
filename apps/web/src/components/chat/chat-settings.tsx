@@ -25,6 +25,7 @@ const listeners = new Set<() => void>();
 
 function read(): ChatSettings {
   if (cached) return cached;
+  if (typeof window === "undefined") return { ...DEFAULTS }; // SSR — no localStorage
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
@@ -104,27 +105,9 @@ function Segmented<T extends string>({
 
 export function ChatSettingsPopover({ onClose }: { onClose: () => void }) {
   const { settings, update } = useChatSettings();
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  // Outside click / Escape closes — a hand-rolled popover (no Radix dep).
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) onClose();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
 
   return (
     <div
-      ref={rootRef}
       role="dialog"
       aria-label="Voice assistant settings"
       className="absolute bottom-full right-0 z-50 mb-2 w-72 rounded-(--radius-sm) border border-(--color-border) bg-(--color-surface) p-3"
@@ -176,12 +159,32 @@ export function ChatSettingsPopover({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Gear button + the popover anchored to it. Renders inside a relative
- *  wrapper; the popover opens above (bar docks low on screen). */
+/** Gear button + the popover anchored to it. Outside clicks / Escape close
+ *  (design.md §3.3.4) — the detection wraps BOTH the gear and the popover,
+ *  so tapping the gear while open toggles it closed instead of closing on
+ *  pointerdown and immediately re-opening on click. */
 export function ChatSettingsButton({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="relative shrink-0">
+    <div ref={wrapRef} className="relative shrink-0">
       <button
         type="button"
         aria-label="Voice settings"

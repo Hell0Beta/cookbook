@@ -2,15 +2,18 @@
 
 // Voice Assistant Panel — design.md §3.3.4, development.md §14. Collapsed =
 // the assistant BAR docked bottom-right (sibling elevation to the timer
-// pill, which docks bottom-left): expand/resize control, live status or
-// latest-reply snippet, record button, settings gear — recording works
-// without expanding. Expanded = resizable bottom sheet over the reader
+// pill, which docks bottom-left; draggable anywhere): expand/resize
+// control, status or latest-reply snippet (drag to move, tap to open),
+// cancel + record buttons, settings gear — recording works without
+// expanding. Expanded = resizable, draggable bottom sheet over the reader
 // (drag the top edge / the bar's control to size it, tap to cycle
-// bar → half → tall): session header (recipe, current step, timer chips),
-// multiturn transcript, push-to-talk mic + always-available text input.
-// Recordings are sent straight to the assistant ("instant") or land in the
-// editable input for correction ("review") per the voice settings; replies
-// are spoken via on-device TTS. Rule-based intents resolve client-side
+// bar → half → tall; drag the header to move it anywhere): session header
+// (recipe, current step, timer chips), multiturn transcript, push-to-talk
+// mic with a cancel affordance + always-available text input. Recordings
+// are sent straight to the assistant ("instant") or land in the editable
+// input for correction ("review") per the voice settings; replies are
+// spoken via on-device TTS — Kokoro only, never the browser's platform
+// voice (owner request 2026-09-12). Rule-based intents resolve client-side
 // (§14.2) — only free questions cost an LLM turn. Mic modes: Standard
 // (sleeps after each reply) and Always-on (keeps listening; silence ends a
 // turn — development.md §14).
@@ -32,6 +35,7 @@ import {
   Timer,
   Volume2,
   VolumeX,
+  X,
   Zap,
 } from "lucide-react";
 import {
@@ -67,6 +71,9 @@ interface PendingMessage {
 type TranscriptMessage = ChatMessage | PendingMessage;
 
 const PANEL_HEIGHT_KEY = "cookbook:chatPanelHeight";
+// The sheet's bottom dock: `bottom-24` = 6rem. Resize math anchors the
+// sheet's bottom edge here so the top edge tracks the finger.
+const BAR_DOCK_PX = 96;
 
 let pendingCounter = 0;
 
@@ -91,6 +98,7 @@ export function ChatPanel({
   // across switches, so transcript/session/tab state survives (§3.3.4).
   const [form, setForm] = useState<"bar" | "sheet">("bar");
   const [heightVh, setHeightVh] = useState(() => {
+    if (typeof window === "undefined") return 55; // SSR — no localStorage
     try {
       const v = Number(localStorage.getItem(PANEL_HEIGHT_KEY));
       if (Number.isFinite(v) && v >= SHEET_HEIGHT_MIN_VH && v <= SHEET_HEIGHT_MAX_VH) return v;
@@ -110,6 +118,12 @@ export function ChatPanel({
   const [tab, setTab] = useState<"chat" | "steps">("chat");
   // Transient bar notice ("Didn't catch that") — cleared on a timer.
   const [notice, setNotice] = useState<string | null>(null);
+  // Dragged positions (top-left px), null = default dock. The chat box and
+  // the bar can be dragged anywhere on screen to read the recipe behind
+  // them (design.md §3.3.4); positions live here so they survive bar ↔
+  // sheet form switches.
+  const [barPos, setBarPos] = useState<{ x: number; y: number } | null>(null);
+  const [sheetPos, setSheetPos] = useState<{ x: number; y: number; w: number } | null>(null);
   const quotaExceeded = useLlmQuotaExceeded();
   const transcriptRef = useRef<HTMLDivElement>(null);
   const stepsCardRef = useRef<HTMLDivElement>(null);
@@ -524,10 +538,17 @@ export function ChatPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.micMode]);
 
-  // Speak a reply; when it finishes (or is interrupted), the always-on mic
-  // picks back up (development.md §14).
+  // Speak a reply; when it finishes (or is interrupted/cancelled), the
+  // always-on mic picks back up (development.md §14). Token guard: when a
+  // newer reply interrupts one still playing, the cancelled reply's onEnd
+  // fires too — only the newest reply may re-arm the mic, or it would hear
+  // the new reply speaking.
+  const replyTokenRef = useRef(0);
   const speakReply = (text: string) => {
-    speak(text, () => void stt.resume());
+    const token = ++replyTokenRef.current;
+    speak(text, () => {
+      if (replyTokenRef.current === token) void stt.resume();
+    });
   };
 
   const toggleMic = () => {
@@ -566,17 +587,90 @@ export function ChatPanel({
     else setForm("bar");
   };
 
-  // Dragging from the bar grows the sheet live under the pointer.
-  const dragResize = (vh: number) => {
+  // ── resizing (design.md §3.3.4) ────────────────────────────────────────────
+  // Both resize gestures move the sheet's TOP edge to the finger — the panel
+  // grows upward, never downward. Bottom edge = the bottom-24 dock (96 px).
+
+  // Dragging the bar's control up: the bar unmounts the moment the sheet
+  // form appears, which would kill a pointer-captured drag — so the gesture
+  // hands off to window-level listeners that survive the swap. The sheet
+  // re-docks (a previously dragged position is dropped) so growth is always
+  // upward from the dock.
+  const beginBarGrow = (clientY: number) => {
     setForm("sheet");
-    resizeTo(vh);
+    setSheetPos(null);
+    const apply = (y: number) => {
+      const vh = window.innerHeight;
+      const bottomPx = vh - BAR_DOCK_PX;
+      const h = Math.min(Math.max(bottomPx - y, vh * (SHEET_HEIGHT_MIN_VH / 100)), vh * (SHEET_HEIGHT_MAX_VH / 100), bottomPx - 8);
+      resizeTo((h / vh) * 100);
+    };
+    apply(clientY);
+    const onMove = (e: PointerEvent) => apply(e.clientY);
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Dragging the sheet's top-edge strip: keep the bottom edge where it is,
+  // bring the top edge to the finger (docked or dragged position alike).
+  const stripResize = (clientY: number) => {
+    const vh = window.innerHeight;
+    const bottom = sheetRef.current?.getBoundingClientRect().bottom ?? vh - BAR_DOCK_PX;
+    const h = Math.min(Math.max(bottom - clientY, vh * (SHEET_HEIGHT_MIN_VH / 100)), vh * (SHEET_HEIGHT_MAX_VH / 100), bottom - 8);
+    if (sheetPos) setSheetPos({ ...sheetPos, y: bottom - h });
+    resizeTo((h / vh) * 100);
+  };
+
+  // ── sheet dragging (design.md §3.3.4) ──────────────────────────────────────
+  // Drag the sheet's header to carry it anywhere on screen (clamped inside
+  // the viewport) — the recipe behind it stays readable. Header buttons are
+  // exempt; the sheet keeps its dragged width so the layout doesn't jump.
+
+  const sheetRef = useRef<HTMLElement>(null);
+  const sheetDragRef = useRef<{
+    px: number;
+    py: number;
+    base: { x: number; y: number; w: number };
+  } | null>(null);
+
+  const onHeaderPointerDown = (e: React.PointerEvent<HTMLElement>) => {
+    if ((e.target as HTMLElement).closest("button")) return; // buttons act normally
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const rect = sheet.getBoundingClientRect();
+    sheetDragRef.current = { px: e.clientX, py: e.clientY, base: { x: rect.left, y: rect.top, w: rect.width } };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onHeaderPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const d = sheetDragRef.current;
+    if (!d) return;
+    const h = (heightVh / 100) * window.innerHeight;
+    setSheetPos({
+      x: Math.min(Math.max(8, d.base.x + e.clientX - d.px), window.innerWidth - d.base.w - 8),
+      y: Math.min(Math.max(8, d.base.y + e.clientY - d.py), window.innerHeight - h - 8),
+      w: d.base.w,
+    });
+  };
+
+  const onHeaderPointerUp = (e: React.PointerEvent<HTMLElement>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // capture already released
+    }
+    sheetDragRef.current = null;
   };
 
   return (
     <>
-      {/* Collapsed — the assistant bar (design.md §3.3.4), bottom-right,
-          sibling of the timer pill (bottom-left, same elevation). Recording
-          and settings work right here; tap the middle to open the sheet. */}
+      {/* Collapsed — the assistant bar (design.md §3.3.4), bottom-right by
+          default, draggable anywhere. Recording and settings work right
+          here; tap the middle to open the sheet. */}
       {form === "bar" && (
         <ChatBar
           listening={listening}
@@ -586,31 +680,56 @@ export function ChatPanel({
           continuous={stt.continuous}
           notice={notice}
           lastReply={lastReply}
+          onCancel={stt.cancel}
           onExpandTap={cycleSize}
-          onResize={dragResize}
+          onBarGrow={beginBarGrow}
           onOpenSheet={() => setForm("sheet")}
           onRecordToggle={toggleMic}
+          position={barPos}
+          onRelocate={(x, y) => setBarPos({ x, y })}
         />
       )}
 
       {/* Expanded — resizable bottom sheet over the reader (design.md
-          §3.3.4). Drag the top edge (or the bar's control) to size it. */}
+          §3.3.4). Drag the top edge (or the bar's control) to size it;
+          drag the header to move it anywhere on screen. */}
       {form === "sheet" && (
         <section
+          ref={sheetRef}
           aria-label="Cooking assistant"
           className="fixed inset-x-(--spacing-margin) bottom-24 z-40 mx-auto flex max-w-2xl flex-col rounded-(--radius-bento) border border-(--color-border) bg-(--color-surface)"
-          style={{ height: `${heightVh}vh` }}
+          style={
+            sheetPos
+              ? {
+                  height: `${heightVh}vh`,
+                  left: sheetPos.x,
+                  top: sheetPos.y,
+                  width: sheetPos.w,
+                  right: "auto",
+                  bottom: "auto",
+                }
+              : { height: `${heightVh}vh` }
+          }
         >
-          {/* Top-edge drag strip (desktop mouse) — tap cycles sizes. */}
+          {/* Top-edge drag strip (desktop mouse) — tap cycles sizes; the top
+              edge follows the pointer, the bottom edge stays put. */}
           <ResizeHandle
             onTap={cycleSize}
-            onResize={resizeTo}
+            onResize={stripResize}
             ariaLabel="Resize the cooking assistant"
             className="absolute inset-x-0 top-0 h-2"
           />
 
-          {/* Session header */}
-          <header className="flex items-center gap-2 border-b border-(--color-border) px-(--spacing-cell) py-2.5">
+          {/* Session header — drag to move the sheet; buttons are exempt. */}
+          <header
+            onPointerDown={onHeaderPointerDown}
+            onPointerMove={onHeaderPointerMove}
+            onPointerUp={onHeaderPointerUp}
+            onPointerCancel={() => {
+              sheetDragRef.current = null;
+            }}
+            className="flex cursor-grab touch-none select-none items-center gap-2 border-b border-(--color-border) px-(--spacing-cell) py-2.5 active:cursor-grabbing"
+          >
             <ChefHat className="size-4 shrink-0 text-(--color-accent)" strokeWidth={1.5} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[length:var(--text-body)] font-medium">{recipeTitle}</p>
@@ -836,7 +955,8 @@ export function ChatPanel({
               className="flex items-center gap-2"
             >
               {/* Push-to-talk mic (§3.3.4): tap to arm, tap to stop; cancels
-                  in-flight speech first (interruption v1). */}
+                  in-flight speech first (interruption v1). The X next to it
+                  discards the recording/transcription entirely. */}
               <button
                 type="button"
                 aria-label={listening ? "Stop recording" : "Start talking"}
@@ -854,6 +974,19 @@ export function ChatPanel({
                 ) : (
                   <Mic className="size-4" strokeWidth={1.5} />
                 )}
+              </button>
+              {/* Cancel (design.md §3.3.4): always next to the mic, enabled
+                  whenever the pipeline has something in flight — recording,
+                  transcribing, or the initial speech-model load (which
+                  otherwise disables the mic with no way out). */}
+              <button
+                type="button"
+                aria-label="Cancel recording"
+                onClick={stt.cancel}
+                disabled={!listening && !micBusy}
+                className="flex size-9 shrink-0 items-center justify-center rounded-(--radius-sm) border border-(--color-error)/50 bg-(--color-page) text-(--color-error) transition-colors hover:border-(--color-error) disabled:opacity-30"
+              >
+                <X className="size-4" strokeWidth={1.5} />
               </button>
               <input
                 ref={inputRef}
