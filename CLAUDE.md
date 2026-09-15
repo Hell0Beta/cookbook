@@ -17,8 +17,9 @@ Also see `cookbook ui idea/stitch_yhup_communication_portal/` — Stitch-generat
 
 ```
 apps/web/            Next.js frontend (bento UI, block editor, meal planner)
+apps/mobile/         React Native + Expo Android app (offline-first, local SQLite + sync — see docs/agents/mobile.md and apps/mobile/CHANGELOG.md)
 apps/api/            Node backend (REST API, Prisma + SQLite, in-process job queue)
-packages/shared/     TypeScript types + Zod schemas shared by web + api
+packages/shared/     TypeScript types + Zod schemas shared by web + api + mobile
 docs/
   design.md          UI/UX spec (source of truth for screens/components)
   development.md     Technical spec (source of truth for data model, pipelines, API)

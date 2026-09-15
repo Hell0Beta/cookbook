@@ -1,0 +1,20 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@cookbook/mobile/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "app/**/*",
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests"
+  ]
+}

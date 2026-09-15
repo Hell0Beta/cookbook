@@ -66,18 +66,45 @@ function pageOf(query: unknown): number {
   return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
+// Mobile sync may request larger pages for stub pulls (?page_size=). The
+// search UI keeps the 24 default (development.md §10); sync caps at 200 to
+// bound response size for the 13.5k-recipe dataset.
+const MAX_PAGE_SIZE = 200;
+
+function pageSizeOf(query: unknown): number {
+  const n = typeof query === "string" ? Number(query) : NaN;
+  return Number.isInteger(n) && n >= 1 ? Math.min(n, MAX_PAGE_SIZE) : PAGE_SIZE;
+}
+
+// ?since= — incremental pull cursor (mobile sync). Invalid values are
+// ignored (treated as a full pull) rather than erroring, so a client clock
+// skew never bricks the sync.
+function sinceOf(query: unknown): Date | null {
+  if (typeof query !== "string" || !query) return null;
+  const d = new Date(query);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 recipesRouter.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
     const tagIds = csvParam(req.query.tags);
     const ingredientIds = csvParam(req.query.ingredients);
     const page = pageOf(req.query.page);
+    const pageSize = pageSizeOf(req.query.page_size);
+    const since = sinceOf(req.query.since);
     const scoring = ingredientIds.length > 0;
 
     const where: Prisma.RecipeWhereInput = { OR: [{ userId: req.userId }, { userId: null }] };
     // Selected tags combine with AND — picking "Dinner" + "Vegetarian" narrows.
     if (tagIds.length > 0) {
       where.AND = tagIds.map((id) => ({ tags: { some: { tagId: id } } }));
+    }
+    // Incremental pull (mobile sync): only recipes changed since the cursor.
+    // With ?ingredients= this stays a full scoring pass — sync never combines
+    // the two.
+    if (since && !scoring) {
+      where.updatedAt = { gt: since };
     }
 
     const summarySelect = {
@@ -87,6 +114,8 @@ recipesRouter.get("/", async (req: Request, res: Response, next: NextFunction) =
       baseServings: true,
       totalTimeMinutes: true,
       sourceType: true,
+      userId: true,
+      updatedAt: true,
     } as const;
 
     // Candidate narrowing via the in-memory inverted index (§9 step 1). The
@@ -102,8 +131,8 @@ recipesRouter.get("/", async (req: Request, res: Response, next: NextFunction) =
         prisma.recipe.findMany({
           where: whereQ,
           orderBy: { updatedAt: "desc" },
-          skip: (page - 1) * PAGE_SIZE,
-          take: PAGE_SIZE,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
           select: summarySelect,
         }),
       ]);
@@ -111,8 +140,8 @@ recipesRouter.get("/", async (req: Request, res: Response, next: NextFunction) =
         items: rows.map(summaryOf),
         total,
         page,
-        page_size: PAGE_SIZE,
-        has_more: page * PAGE_SIZE < total,
+        page_size: pageSize,
+        has_more: page * pageSize < total,
       });
       return;
     }
@@ -207,6 +236,8 @@ function summaryOf(r: {
   baseServings: number;
   totalTimeMinutes: number | null;
   sourceType: string;
+  userId: string | null;
+  updatedAt: Date;
 }) {
   return {
     id: r.id,
@@ -215,8 +246,37 @@ function summaryOf(r: {
     base_servings: r.baseServings,
     total_time_minutes: r.totalTimeMinutes,
     source_type: r.sourceType,
+    updated_at: r.updatedAt.toISOString(),
+    user_id: r.userId,
   };
 }
+
+// ── GET /recipes/deleted?since= — tombstones for incremental sync ────────────
+// Mobile sync additions (development.md §11): a phone that last synced at
+// `since` asks which recipes were deleted server-side since then. Registered
+// before /:id so "deleted" can't be read as an id.
+recipesRouter.get("/deleted", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const since = sinceOf(req.query.since) ?? new Date(0);
+    const tombstones = await prisma.recipeTombstone.findMany({
+      where: {
+        deletedAt: { gt: since },
+        OR: [{ userId: null }, { userId: req.userId }],
+      },
+      select: { id: true },
+      take: MAX_PAGE_SIZE,
+    });
+    // Opportunistic pruning: entries older than 90 days predate any
+    // plausible sync horizon (mobile pulls at most daily; tombstones are
+    // only consulted incrementally).
+    await prisma.recipeTombstone.deleteMany({
+      where: { deletedAt: { lt: new Date(Date.now() - 90 * 86_400_000) } },
+    });
+    res.json({ ids: tombstones.map((t) => t.id), since: since.toISOString() });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ── GET /recipes/favorites — the Meal Planner's "Saved & Favorited" sidebar
 // (development.md §11). Registered before /:id so "favorites" can't be read
@@ -233,18 +293,11 @@ recipesRouter.get("/favorites", async (req: Request, res: Response, next: NextFu
         baseServings: true,
         totalTimeMinutes: true,
         sourceType: true,
+        userId: true,
+        updatedAt: true,
       },
     });
-    res.json(
-      recipes.map((r) => ({
-        id: r.id,
-        title: r.title,
-        hero_image_url: r.heroImageUrl,
-        base_servings: r.baseServings,
-        total_time_minutes: r.totalTimeMinutes,
-        source_type: r.sourceType,
-      })),
-    );
+    res.json(recipes.map(summaryOf));
   } catch (err) {
     next(err);
   }
@@ -326,8 +379,15 @@ recipesRouter.put("/:id/blocks", putBlocks);
 // ── DELETE /recipes/:id ───────────────────────────────────────────────────────
 recipesRouter.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await getOwnRecipe(req.params.id!, req.userId!);
-    await prisma.recipe.delete({ where: { id: req.params.id } });
+    const recipe = await getOwnRecipe(req.params.id!, req.userId!);
+    // Tombstone before the cascade wipes the row (mobile sync, §11): the id
+    // must outlive the recipe so phones learn of the deletion.
+    await prisma.recipeTombstone.upsert({
+      where: { id: recipe.id },
+      create: { id: recipe.id, userId: recipe.userId },
+      update: { userId: recipe.userId, deletedAt: new Date() },
+    });
+    await prisma.recipe.delete({ where: { id: recipe.id } });
     invalidateIngredientIndex(); // cascaded RecipeIngredient rows left the index
     res.status(204).end();
   } catch (err) {

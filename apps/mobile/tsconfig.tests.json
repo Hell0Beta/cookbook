@@ -1,0 +1,9 @@
+{
+  // Node-context typecheck for tests only (tsx --test runs under Node, not
+  // RN); the main tsconfig excludes tests to keep Expo's RN type context.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["tests/**/*", "src/**/*", "app/**/*", "expo-env.d.ts"]
+}

@@ -68,6 +68,18 @@ model Recipe {
   // (JSON array), not a FK relation — no back-relation needed.
 }
 
+// Deletion tombstones (mobile sync, added 2026-09-15): written when a recipe
+// is deleted so phones can learn about the deletion on their next incremental
+// pull (GET /recipes/deleted?since=). Pruned opportunistically — entries
+// older than the max mobile sync horizon are dead weight.
+model RecipeTombstone {
+  id        String   @id
+  userId    String?
+  deletedAt DateTime @default(now())
+
+  @@index([deletedAt])
+}
+
 // Master/normalized ingredient dictionary — shared across recipes (development.md §3).
 model Ingredient {
   id             String @id @default(cuid())
