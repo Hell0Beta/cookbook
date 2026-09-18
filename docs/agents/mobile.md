@@ -8,10 +8,12 @@ The mobile app's own living changelog is **`apps/mobile/CHANGELOG.md`** — ever
 
 ## Read list
 
-- `../../App Plan.txt` (repo parent) — the mobile app's requirements: offline/hybrid feature split, eviction-with-prompt, try-and-catch connectivity with live recovery.
+- `docs/todos/mobile-phases.md` — **the build plan and the web → mobile file map**: which web file to port for which screen, at which phase. Start here for any screen work.
 - `docs/development.md` — §0 (binding constraints), §3 (data model — mirror field names in the SQLite schema), §7 (timer/shake designs — port to expo-notifications/expo-sensors), §11 (API surface — same endpoints, no forking), §8–§10 (scaling/search/recommendations — shared pure functions do the work).
 - `docs/design.md` — screens and states. Mobile mirrors the web screens (Dashboard, Search, Reader/Editor, Planner, Grocery, Profile) with mobile-native navigation and gestures, keeping the Heirloom Kitchen token palette (`src/lib/theme.ts`).
 - `apps/web/src/lib/api.ts` — the reference API client; the mobile surface mirrors it (`src/lib/api-surface.ts`).
+
+> The mobile requirements doc `App Plan.txt` (formerly in the repo parent) is **gone** — its three binding rules (offline/hybrid feature split, try-and-catch connectivity with live recovery, eviction-with-prompt) are recorded in `docs/todos/mobile-phases.md` and referenced by `src/sync/engine.ts`, `src/lib/connectivity.ts`, `src/stores/network.ts`, `src/db/schema.ts`. Restore the file if it turns up, otherwise treat the phase doc as the record.
 
 ## Architecture (binding)
 
